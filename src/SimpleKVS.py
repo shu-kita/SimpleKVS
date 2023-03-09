@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+
 import pickle
+import Value
 
 class SimpleKVS:
     
@@ -39,22 +42,25 @@ class SimpleKVS:
             return
 
         if (key not in self.db) or is_overwrite:
-            self.db[key] = value
+            v = Value(value)
+            self.db[key] = v
         else:
             print(f"Key '{key}' is already exist.")
 
-    def get(self, key):
+    def get(self, key, version=0):
         """
         キーを指定し、バリューを取得する
 
         parameter
             key : キー
+            version : valueのバージョン指定する(デフォルト0)
         """
         if not self.is_exist():
             return
         
         if key in self.db:
-            return self.db[key]
+            value = self.db[key]
+            return value.get_value(version)
         else:
             return None
 
@@ -69,7 +75,7 @@ class SimpleKVS:
             return
         
         for key, value in self.db.items():
-            print(f"{key}: {value}")
+            print(f"{key}: {value.value}")
 
     def delete(self, key):
         """
@@ -95,7 +101,3 @@ class SimpleKVS:
         """
         with open(self.pickle_file, 'wb') as f:
             pickle.dump(self.db, f)
-
-sdb = SimpleKVS("test.pickle")
-sdb.scan()
-del sdb
