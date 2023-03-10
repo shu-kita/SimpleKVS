@@ -45,6 +45,6 @@ class Value:
         elif version <= 0:
             ret = self.value
         else:
-            self.old_values[version]
+            ret = self.old_values[version]
 
         return ret

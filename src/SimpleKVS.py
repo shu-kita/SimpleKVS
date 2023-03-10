@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pickle
-import Value
+from Value import *
 
 class SimpleKVS:
     
@@ -41,8 +41,12 @@ class SimpleKVS:
         if not self.is_exist():
             return
 
-        if (key not in self.db) or is_overwrite:
+        if key not in self.db:
             v = Value(value)
+            self.db[key] = v
+        elif is_overwrite:
+            v = self.db[key]
+            v.update(value)
             self.db[key] = v
         else:
             print(f"Key '{key}' is already exist.")
