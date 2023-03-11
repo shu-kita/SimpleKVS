@@ -11,8 +11,7 @@ class Value:
     """
     
     def __init__(self, value):
-        self.value = value
-        self.old_values = []
+        self.values = [value]
     
     def update(self, new_value):
         """
@@ -22,12 +21,9 @@ class Value:
         parameter
             new_value : 更新するvalue
         """
-
-        self.old_values.insert(0, self.value)
-        if len(self.old_values) > 10:
-            self.old_values = self.old_values[:10]
-        
-        self.value = new_value
+        self.values.insert(0, new_value)
+        if len(self.values) > 10:
+            self.values = self.values[:10]        
     
     def get_value(self, version=0):
         """
@@ -40,11 +36,11 @@ class Value:
         """
         ret = None
 
-        if version > len(self.old_values):
-            ret = self.old_values[-1]
+        if version > len(self.values):
+            ret = self.values[-1]
         elif version <= 0:
-            ret = self.value
+            ret = self.values[0]
         else:
-            ret = self.old_values[version]
+            ret = self.values[version]
 
         return ret
