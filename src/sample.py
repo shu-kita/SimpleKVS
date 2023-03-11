@@ -11,7 +11,7 @@ from value import *
 # 実行用
 
 test_file = "./test.pickle"
-kvs = SimpleKVS()
+kvs = SimpleKvs()
 
 # kvs.put(1, "test3", True)
 

@@ -5,7 +5,7 @@ import traceback
 from value import *
 from setting import *
 
-class SimpleKVS:
+class SimpleKvs:
     
     def __init__(self):
         self.db = {}
@@ -22,20 +22,6 @@ class SimpleKVS:
     def __del__(self):
         self.save()
 
-    def is_exist(self):
-        """
-        ファイルの存在をチェックする
-
-        parameter
-            無し
-        """
-        result = True
-        if not self.db:
-            print(f"{self.pickle_file} is not exist.")
-            result = False
-        
-        return result
-        
     def put(self, key, value, is_overwrite=False):
         """
         parameter
@@ -43,17 +29,14 @@ class SimpleKVS:
             value : 値
             is_overwrite : 上書きする/しない(True=する, False=しない)
         """
-        if not self.is_exist():
-            return
-
-        if key not in self.db:
+        if not self.contains_key(key): # DBにkeyが無いとき(新規作成)の処理
             v = Value(value)
             self.db[key] = v
-        elif is_overwrite:
+        elif is_overwrite: # 上書きのときの処理
             v = self.db[key]
             v.update(value)
             self.db[key] = v
-        else:
+        else: # Keyが存在していて、上書きモードではない時の処理
             print(f"Key '{key}' is already exist.")
 
     def get(self, key, version=0):
@@ -64,10 +47,7 @@ class SimpleKVS:
             key : キー
             version : valueのバージョン指定する(デフォルト0)
         """
-        if not self.is_exist():
-            return
-        
-        if key in self.db:
+        if self.contains_key(key):
             value = self.db[key]
             return value.get_value(version)
         else:
@@ -80,9 +60,6 @@ class SimpleKVS:
         parameter
             無し
         """
-        if not self.is_exist():
-            return
-        
         for key, value in self.db.items():
             print(f"{key}: {value.value}")
 
@@ -93,9 +70,6 @@ class SimpleKVS:
         parameter
             key : キー
         """
-        if not self.is_exist():
-            return
-        
         if key in self.db:
             del self.db[key]
         else:
@@ -108,5 +82,18 @@ class SimpleKVS:
         parameter
             無し
         """
-        with open(self.pickle_file, 'wb') as f:
+        pickle_file = self.setting.get("data_file")
+        with open(pickle_file, 'wb') as f:
             pickle.dump(self.db, f)
+    
+    def contains_key(self, key):
+        """
+        Keyの存在を確認する処理
+
+        parameter
+            key : キー
+        
+        return
+            boolean
+        """
+        return key in self.db
