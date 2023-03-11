@@ -5,21 +5,21 @@
 動作確認用
 """
 
-from SimpleKVS import *
-from Value import *
+from skvs import *
+from value import *
 
 # 実行用
 
 test_file = "./test.pickle"
-kvs = SimpleKVS(test_file)
+kvs = SimpleKVS()
 
 # kvs.put(1, "test3", True)
 
 value = kvs.get(1)
 print(value)
 
-old_value = kvs.get(1, 1)
-print(old_value)
+value2 = kvs.get(1, version=1)
+print(value2)
 
 
 """-----------------------------------------------------------------------------------------------"""
@@ -33,3 +33,19 @@ print(old_value)
 
 # with open("test.pickle", mode="wb") as f:
 #     pickle.dump(data, f)
+
+# pickleファイルの中を確認
+
+# with open("test.pickle", mode="rb") as f:
+#     obj = pickle.load(f)
+#     print(obj[1].values)
+
+"""-----------------------------------------------------------------------------------------------"""
+
+# 設定ファイル作成用
+
+# jsondata = {"data_file": "test.pickle"}
+
+# file = "setting.json"
+# with open(file, mode="w") as f:
+#     json.dump(jsondata, f)
