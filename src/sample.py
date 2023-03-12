@@ -10,35 +10,32 @@ from value import *
 
 # 実行用
 
-test_file = "./test.pickle"
+# test_file = "./test.pickle"
 kvs = SimpleKvs()
 
-# kvs.put(1, "test3", True)
+# # kvs.put(1, "test3", True)
 
-value = kvs.get(1)
+value = kvs.get("1")
 print(value)
 
-value2 = kvs.get(1, version=1)
-print(value2)
+kvs.put("2", "test2")
 
+kvs.scan()
 
 """-----------------------------------------------------------------------------------------------"""
 
 # テスト用データファイル作成
+# False -> Trueに変更して使用
+if False:
+    v = Value("test")
+    s = v.serialize()
+    test_data = {
+        "1": s
+    }
 
-# import pickle
+    with open("test.pack", mode="wb") as f:
+        f.write(msgpack.packb(test_data))
 
-# data = {1: Value("test")}
-# print(type(data))
-
-# with open("test.pickle", mode="wb") as f:
-#     pickle.dump(data, f)
-
-# pickleファイルの中を確認
-
-# with open("test.pickle", mode="rb") as f:
-#     obj = pickle.load(f)
-#     print(obj[1].values)
 
 """-----------------------------------------------------------------------------------------------"""
 

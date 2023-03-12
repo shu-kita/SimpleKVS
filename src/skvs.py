@@ -2,6 +2,7 @@
 
 import pickle
 import traceback
+import msgpack
 from value import *
 from setting import *
 
@@ -11,10 +12,13 @@ class SimpleKvs:
         self.db = {}
         try:
             self.setting = Setting("setting.json") # 設定ファイルからSettingオブジェクトを作成
-            pickle_file = self.setting.get("data_file")
-            self.pickle_file = pickle_file
-            with open(pickle_file, 'rb') as f:
-                self.db = pickle.load(f)
+            data_file = self.setting.get("data_file")
+            print(data_file)
+            with open(data_file, 'rb') as f:
+                bin_data = f.read()
+                unpack_data = msgpack.unpackb(bin_data)
+                for k,v in unpack_data.items():
+                    self.db[k] = pickle.loads(v)
         except:
             traceback.print_exc()
             return
@@ -61,7 +65,7 @@ class SimpleKvs:
             無し
         """
         for key, value in self.db.items():
-            print(f"{key}: {value.value}")
+            print(f"{key}: {value.values[0]}")
 
     def delete(self, key):
         """
@@ -82,10 +86,15 @@ class SimpleKvs:
         parameter
             無し
         """
-        pickle_file = self.setting.get("data_file")
-        with open(pickle_file, 'wb') as f:
-            pickle.dump(self.db, f)
-    
+        data_file = self.setting.get("data_file")
+        with open(data_file, mode='wb') as f:
+            tmp_db = self.db.copy() # 参照写しにより、self.dbのvalueがシリアライズされないためコピー
+            for k,v in tmp_db.items():
+                tmp_db[k] = v.serialize()
+            pack = msgpack.packb(tmp_db)
+            f.write(pack)
+
+            
     def contains_key(self, key):
         """
         Keyの存在を確認する処理

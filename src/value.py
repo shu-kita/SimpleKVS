@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import pickle
+
 class Value:
     """
     Key-ValueのValue用のクラス
@@ -7,7 +9,7 @@ class Value:
     バージョン機能の実現のために作成した(3/9)
     古いバージョンを10まで持つようにしている(3/9)
 
-    SimpleKVS側でimportできていない
+    現状、リストでいいと思うが、機能を増やす場合にクラス化したほうがよさそうな気がしている
     """
     
     def __init__(self, value):
@@ -44,3 +46,9 @@ class Value:
             ret = self.values[version]
 
         return ret
+
+    def serialize(self):
+        """
+        自身をシリアライズ化するメソッド
+        """
+        return pickle.dumps(self)
