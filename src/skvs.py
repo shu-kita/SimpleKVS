@@ -10,7 +10,6 @@ from value import *
 from setting import *
 
 class SimpleKvs:
-    
     def __init__(self):
         self.db = {}
         try:
@@ -19,7 +18,7 @@ class SimpleKvs:
 
             logging.basicConfig(
                 filename=log_file,
-                format='%(asctime)s %(levelname)s : %(message)s',
+                format='%(asctime)s [%(levelname)s] %(message)s',
                 level=logging.INFO,
                 encoding="utf-8"
                 )
@@ -33,7 +32,7 @@ class SimpleKvs:
 
         except (SettingFileNotFoundError,InvalidFileExtensionError):
             logging.basicConfig(
-                format='%(asctime)s %(levelname)s : %(message)s',
+                format='%(asctime)s [%(levelname)s] %(message)s',
                 level=logging.INFO,
                 encoding="utf-8"
             )
@@ -81,6 +80,7 @@ class SimpleKvs:
             self.db[key] = v
         else: # Keyが存在していて、上書きモードではない時の処理
             print(f"Key '{key}' is already exist.")
+            logging.warn(f"put('{value}') is executed, but Key '{key}' is already exist.")
 
     def get(self, key, version=0):
         """
@@ -94,6 +94,7 @@ class SimpleKvs:
             value = self.db[key]
             return value.get_value(version)
         else:
+            logging.warn(f"get('{key}') is executed, but key '{key}' is not exist.")
             return None
 
     def scan(self):
@@ -116,6 +117,7 @@ class SimpleKvs:
         if key in self.db:
             del self.db[key]
         else:
+            logging.warn(f"delete('{key}') is executed, but key '{key}' is not exist.")
             print(f"Key '{key}' is not exist.")
 
     def save(self):
@@ -127,15 +129,16 @@ class SimpleKvs:
         """
         data_file = self.setting.get("data_file")
         with open(data_file, mode='wb') as f:
-            tmp_db = self.db.copy() # 参照写しにより、self.dbのvalueがシリアライズされないためコピー
+            tmp_db = self.db.copy() # 参照写しにより、self.dbのvalueがpickle.dumpsされないためコピー
             for k,v in tmp_db.items():
-                tmp_db[k] = v.serialize()
+                tmp_db[k] = pickle.dumps(v)
             pack = msgpack.packb(tmp_db)
             f.write(pack)
 
     def contains_key(self, key):
         """
         Keyの存在を確認する処理
+        データを複数ファイルに分けるとかやりだすと、特殊な処理が必要な気がするので、一応関数にしている
 
         parameter
             key : キー

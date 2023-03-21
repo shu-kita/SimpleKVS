@@ -12,6 +12,10 @@ class Setting:
 
     def __init__(self, setting_file):
         """
+        コンストラクタ(初期化処理)
+        設定ファイル(json)を読み込む
+        ファイルが存在しない時、jsonファイル(拡張子が.json)ではない時、例外をあげる
+
         parameter
             setting_file : 設定ファイルのパス(文字列)
         """
@@ -36,4 +40,10 @@ class Setting:
             return setting
     
     def get(self, key):
+        """
+        指定されたkeyに対するvalueを返す
+
+        parameter
+            key : キー
+        """
         return self.setting[key]
