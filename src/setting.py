@@ -2,7 +2,6 @@
 
 import json
 import pathlib
-import traceback
 
 from error import *
 
@@ -16,26 +15,14 @@ class Setting:
         parameter
             setting_file : 設定ファイルのパス(文字列)
         """
-        try:
-            path = self.file_check(setting_file)
-            self.setting = self.read(path=path)
-        except:
-            traceback.print_exc()
-            self.setting = {}
-            return
-
-    def file_check(self, filepath):
-        """
-        ファイルの正当性をチェックする関数
-        
-        """
-        path = pathlib.Path(filepath)
-        if not path.exists():
-            raise FileNotFoundError(f"\'{filepath}\' is not exist.")
+        path = pathlib.Path(setting_file)
+        if not path.exists:
+            raise SettingFileNotFoundError(f"The setting file that name is \'{setting_file}\' can not find.")
         elif path.suffix != ".json":
             raise InvalidFileExtensionError("suffix is not \'json\'.")
 
-        return path 
+        self.setting = self.read(path=path)
+        return
 
     def read(self, path):
         """

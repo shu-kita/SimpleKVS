@@ -15,12 +15,12 @@ kvs = SimpleKvs()
 
 # # kvs.put(1, "test3", True)
 
-value = kvs.get("1")
-print(value)
+# value = kvs.get("1")
+# print(value)
 
-kvs.put("2", "test2")
+# kvs.put("2", "test2")
 
-kvs.scan()
+# kvs.scan()
 
 """-----------------------------------------------------------------------------------------------"""
 

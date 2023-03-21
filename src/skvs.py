@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import logging
+import pathlib
 import pickle
 import traceback
 import msgpack
+from error import SettingFileNotFoundError, InvalidFileExtensionError
 from value import *
 from setting import *
 
@@ -11,20 +14,56 @@ class SimpleKvs:
     def __init__(self):
         self.db = {}
         try:
-            self.setting = Setting("setting.json") # 設定ファイルからSettingオブジェクトを作成
+            self.setting = Setting("setting.json")
+            log_file = self.setting.get("log_file")
+
+            logging.basicConfig(
+                filename=log_file,
+                format='%(asctime)s %(levelname)s : %(message)s',
+                level=logging.INFO,
+                encoding="utf-8"
+                )
+            logging.info("Starting SimpleKVS...")
+
             data_file = self.setting.get("data_file")
-            print(data_file)
-            with open(data_file, 'rb') as f:
-                bin_data = f.read()
-                unpack_data = msgpack.unpackb(bin_data)
-                for k,v in unpack_data.items():
-                    self.db[k] = pickle.loads(v)
+            logging.info(f"Using datafile : {data_file}")
+
+            self.db = self.load_db(data_file)
+            logging.info(f"SimpleKVS started successfully.")
+
+        except (SettingFileNotFoundError,InvalidFileExtensionError):
+            logging.basicConfig(
+                format='%(asctime)s %(levelname)s : %(message)s',
+                level=logging.INFO,
+                encoding="utf-8"
+            )
+            logging.error(traceback.format_exc())
+
         except:
-            traceback.print_exc()
-            return
+            message = f"SimpleKVS failed to start due to the following error :\n{traceback.format_exc()}"
+            logging.error(msg=message)
 
     def __del__(self):
-        self.save()
+        pass
+
+    def load_db(self, data_file):
+        """
+        データファイル(データベース)からデータをロードする関数
+
+        parameter
+            data_file : データファイルのファイル名
+        """
+        path = pathlib.Path(data_file)
+        if path.exists():
+            with open(data_file, 'rb') as f:
+                binary = f.read()
+                unpack = msgpack.unpackb(binary)
+                obj = {}
+                for k,v in unpack.items():
+                    obj[k] = pickle.loads(v)
+            return obj
+        else:
+            raise FileNotFoundError(f"{data_file} is not found.")
 
     def put(self, key, value, is_overwrite=False):
         """
@@ -94,7 +133,6 @@ class SimpleKvs:
             pack = msgpack.packb(tmp_db)
             f.write(pack)
 
-            
     def contains_key(self, key):
         """
         Keyの存在を確認する処理
