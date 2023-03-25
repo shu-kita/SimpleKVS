@@ -12,9 +12,10 @@ from value import *
 
 kvs = SimpleKvs()
 
-# kvs.put("2", "test2")
+kvs.put("1", "test4", is_overwrite=True)
 
 kvs.scan()
+kvs.save()
 
 """-----------------------------------------------------------------------------------------------"""
 

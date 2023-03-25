@@ -46,4 +46,9 @@ class Setting:
         parameter
             key : キー
         """
-        return self.setting[key]
+        if key in self.setting.keys():
+            value = self.setting[key]
+        else:
+            value = None
+        
+        return value
