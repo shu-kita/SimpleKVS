@@ -41,3 +41,10 @@ class Value:
             ret = self.values[version]
 
         return ret
+    
+    def get_latest(self):
+        """
+        最新バージョンを返す関数
+        """
+        return self.values[0]
+    

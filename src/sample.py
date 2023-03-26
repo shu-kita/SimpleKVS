@@ -10,12 +10,13 @@ from value import *
 
 # 実行用
 
-kvs = SimpleKvs()
+# kvs = SimpleKvs()
 
-kvs.put("1", "test4", is_overwrite=True)
+# for i in range(10):
+#     kvs.put("1", f"test{i}", is_overwrite=True)
 
-kvs.scan()
-kvs.save()
+# kvs.scan()
+# kvs.save()
 
 """-----------------------------------------------------------------------------------------------"""
 

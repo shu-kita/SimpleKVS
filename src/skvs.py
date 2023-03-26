@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import atexit
 import logging
 import pathlib
 import pickle
@@ -40,6 +41,9 @@ class SimpleKvs:
             self.db = self.load_db(data_file)
             logging.info(f"SimpleKVS started successfully.")
 
+            # プログラム終了時にseveを実行するための処理
+            atexit.register(self.save)
+
         # 設定ファイルが見つからない or 拡張子が.jsonではない時の処理
         # 設定ファイルが読めず、ログファイルが決まらないため、コンソールに出す
         except (SettingFileNotFoundError,InvalidFileExtensionError):
@@ -54,9 +58,6 @@ class SimpleKvs:
         except:
             message = f"SimpleKVS failed to start due to the following error :\n{traceback.format_exc()}"
             logging.error(msg=message)
-
-    def __del__(self):
-        pass
 
     def load_db(self, data_file):
         """
@@ -100,8 +101,8 @@ class SimpleKvs:
             v.update(value)
             self.db[key] = v
         else: # Keyが存在していて、上書きモードではない時の処理
-            print(f"Key '{key}' is already exist.")
             logging.warn(f"put('{value}') is executed, but Key '{key}' is already exist.")
+            raise KeyError(f"Key '{key}' already exists in the database and is_overwrite is set to False.")
 
     def get(self, key, version=0):
         """
@@ -126,7 +127,7 @@ class SimpleKvs:
             無し
         """
         for key, value in self.db.items():
-            print(f"{key}: {value.values[0]}")
+            print(f"{key}: {value.get_latest()}")
             
     def delete(self, key):
         """
@@ -139,7 +140,7 @@ class SimpleKvs:
             del self.db[key]
         else:
             logging.warn(f"delete('{key}') is executed, but key '{key}' is not exist.")
-            print(f"Key '{key}' is not exist.")
+            raise KeyError(f"Key '{key}' already exists in the database and is_overwrite is set to False.")
 
     def save(self):
         """
