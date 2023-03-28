@@ -126,8 +126,8 @@ class SimpleKvs:
         parameter
             無し
         """
-        for key, value in self.db.items():
-            print(f"{key}: {value.get_latest()}")
+        return self.db.items()
+
             
     def delete(self, key):
         """

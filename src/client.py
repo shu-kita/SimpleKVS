@@ -20,14 +20,22 @@ def send_request(operation, key, value):
         print(f"Received: {data}")
         return data
 
+def result_parse(result):
+    j_obj = json.loads(result)
+    return j_obj["result"]
+
 def get(key):
-    return send_request("get", key, "")
+    res = send_request("get", key, "")
+    return result_parse(res)
 
 def put(key, value):
-    return send_request("put", key, value)
+    res = send_request("put", key, value)
+    return result_parse(res)
 
 def delete(key):
-    return send_request("delete", key, "")
+    res = send_request("delete", key, "")
+    return result_parse(res)
 
 def scan():
-    return send_request("scan", "", "")
+    res =  send_request("scan", "", "")
+    return result_parse(res)

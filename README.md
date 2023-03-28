@@ -4,14 +4,29 @@ SimpleKVSは、簡単にKeyとValueのセット保存するためのPythonモジ
 
 ## 使用方法
 
-★更新予定
+* Server
+    ```
+    python server.py
+    ```
+    ポート41224で待機する。
 
-## TODO
 
-* このReadmeの更新
-* サーバー機能(server.py)とデータベース機能(skvs.py)を1つにまとめるべきか考える
-* データが大きくなったらどうするかを全く考えられていない(ファイル分割等)
+* Client
+```
+import client
 
+# get
+client.get("1")
+
+# put
+client.put("1", "test")
+
+# delete
+client.delete("1")
+
+# scan
+client.scan()
+```
 
 ## ライセンス
 

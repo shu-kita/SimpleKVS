@@ -36,6 +36,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         
         operation, key, value = get_operation_and_key(data)
 
+        obj = {
+            "result" : None,
+            "operation" : operation
+        }
+
         if operation == "get":
             result = kvs.get(key)
         elif operation == "put":
@@ -43,12 +48,16 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         elif operation == "delete":
             result = kvs.delete(key)
         elif operation == "scan":
-            result = kvs.scan()
+            result = dict(kvs.scan())
+            for k,v in result.items():
+                result[k] = v.get_latest()
 
-        res = "" if result is None else result
+        obj["result"] = "" if result is None else result
+
+        j_obj = json.dumps(obj)
 
         # クライアントに応答を送信する
-        conn.sendall(res.encode())
+        conn.sendall(j_obj.encode())
 
         # 接続を閉じる
         conn.close()
