@@ -2,7 +2,7 @@
 
 import atexit
 import logging
-import pathlib
+from pathlib import Path
 import pickle
 import traceback
 import msgpack
@@ -11,7 +11,14 @@ from value import *
 from setting import *
 
 class SimpleKvs:
-    def __init__(self):
+    def __init__(self, path, mem_limit=1024):
+        self.path = Path(path)
+        if not self.path.exists():
+            self.path.mkdir(parents=True)
+
+        self.memtable = {}
+        self.mem_limit = mem_limit
+
         self.db = {}
         try:
             setting_file = "setting.json"
@@ -66,7 +73,7 @@ class SimpleKvs:
         parameter
             data_file : データファイルのファイル名
         """
-        path = pathlib.Path(data_file)
+        path = Path(data_file)
         if path.exists():
             with open(data_file, 'rb') as f:
                 binary = f.read()
@@ -169,3 +176,8 @@ class SimpleKvs:
             boolean
         """
         return key in self.db.keys()
+
+    def flash():
+        """
+        memtableをSSTableとして、ディスクに書き込む
+        """
