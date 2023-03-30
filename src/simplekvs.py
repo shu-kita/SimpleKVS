@@ -1,4 +1,6 @@
 from pathlib import Path
+from threading import Lock
+
 from sstable import SSTable
 from wal import WAL
 
@@ -17,6 +19,38 @@ class SimpleKVS:
         self.wal = WAL(self.data_dir / "wal")
         self.recovery_wal(self.memtable)
 
+    def __getitem__(self, key):
+        return self.get(key)
+
+
+    def __contains__(self, key):
+        return self.get(key) is not None
+
+    def get(self, key):
+        # memtableから取得
+        v = self.memtable.get(key)
+        if v is not None: # vがNoneではない = 値が取得できた => returnする
+            return v
+        
+        # SStableから取得(新しいSSTableから順に探す)
+        for sstable in reversed(self.sstable_list):
+            v = sstable.get(key)
+            if v is not None: # vがNoneではない = 値が取得できた => returnする
+                return v
+        # memtable, SSTableともにない => Noneをreturn
+        return None
+    
+    def set(self, key, value):
+        with Lock():
+            self.wal.set(key, value)
+            self.memtable[key] = value
+            # memtableのサイズがlimitを超えたとき
+            if len(self.memtable) >= self.memtable_limit:
+                sstable = SSTable(self.data_dir, self.memtable)
+                self.sstable_list.append(sstable)
+                self.memtable = {}
+                self.wal.clean_up()
+
     def recovery_wal(self, memtable):
         for k,v in self.wal.recovery():
             memtable[k] = v
@@ -24,6 +58,4 @@ class SimpleKVS:
     def load_sstables(self):
         for sstable in self.data_dir.glob("sstab_*.dat"):
             self.sstable_list.add(SSTable(sstable))
-        # 最新のSSTableが先頭に来るように
-        self.sstable_list.reverse()
         
