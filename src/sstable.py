@@ -1,18 +1,78 @@
 from pathlib import Path
-from io_utils import load_index
+from datetime import datetime
+from io_utils import dump_kv, load_kv, dump_index, load_index
 
 class SSTable:
-    def __init__(self, path:str):
+    def __init__(self, path:Path, memtable:dict={}):
+        # 現在時刻(unixtimeで取得)
+        
+        # sstab_<現在時刻>.datファイルのPathオブジェクトを作成
         self.path = Path(path)
-        self.index_file = Path(path + ".index")
+        if self.path.is_dir():
+            now = int(datetime.now().timestamp())
+            self.path = self.path / f"sstab_{now}.dat"
+
+        self.index_path = Path(self.path.name + ".index")
         self.search_index = {}
 
-        self.path
+        if self.path.exists(): # pathが存在する => SSTableを読み込む時
+            self.load_search_index()
+        elif memtable: # pathが存在しない && memtableが空ではない => sstableに書き込む時
+            self.flush_to_sstable(memtable)
+        else: # pathが存在しない && memtableが空 => 想定外の処理なのでエラーにする 
+            raise ValueError(f"Failed to create SSTable \'{self.path}\'.")
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}("{self.path}")'
+    
+    def __str__(self):
+        return self.path
+    
+    def __iter__(self):
+        with open(self.path, mode="rb") as sstable:
+            for k,v in load_kv(sstable):
+                yield k,v
+
+    def flush_to_sstable(self, memtable:dict):
+        """
+        memtableをsstableに書き込む関数
+        """
+         # memtableをSStableに書き込む処理
+        with open(self.path, mode="ab") as sstable:
+            for k,v in sorted(memtable.items()):
+                position = sstable.tell()
+                dump_kv(sstable, k, v)
+                self.search_index[k] = position
+        # indexをindexファイルに書き込む処理
+        with open(self.index_path, mode="ab") as index_file:
+            for k, p in self.search_index.items():
+                dump_index(index_file, k, p)
 
     def load_search_index(self):
-        with open(self.index_file, mode="rb") as index_file:
+        """
+        <ファイル名>.dat.indexファイルからindexを読み込む
+        """
+        with open(self.index_path, mode="rb") as index_file:
             for key, position in load_index(index_file):
                 self.search_index[key] = position
 
-
-SSTable("test.dat")
+    def get(self, key):
+        """
+        SSTableから、valueを読み込む
+        """
+        position = self.search_index.get(key) # keyが存在しない場合はNoneが返る        
+        if position is None: # keyが存在しない => Noneを返す
+            return None
+        
+        # sstableから、valueを読み込む処理
+        with open(self.path, mode="rb") as sstable:
+            sstable.seek(position)
+            _, v = load_kv(sstable)
+            return v
+    
+    def delete_sstable(self):
+        """
+        sstable, indexのファイルを削除する
+        """
+        self.path.unlink()
+        self.index_path.unlink()
