@@ -7,7 +7,7 @@ from wal import WAL
 class SimpleKVS:
     def __init__(self, data_dir, memtable_limit=1024):
         self.data_dir = Path(data_dir)
-        if self.data_dir.exists(): # data_dirが無い => 作成する
+        if not self.data_dir.exists(): # data_dirが無い => 作成する
             self.data_dir.mkdir(parents=True)
 
         self.memtable = {}
@@ -15,6 +15,7 @@ class SimpleKVS:
 
         self.sstable_list = []
         self.load_sstables()
+        self.marge_sstables()
 
         self.wal = WAL(self.data_dir / "wal")
         self.recovery_wal(self.memtable)
@@ -38,7 +39,7 @@ class SimpleKVS:
             if v is not None: # vがNoneではない = 値が取得できた => returnする
                 return v
         # memtable, SSTableともにない => Noneをreturn
-        return None
+        return
     
     def set(self, key, value):
         with Lock():
@@ -57,5 +58,19 @@ class SimpleKVS:
     
     def load_sstables(self):
         for sstable in self.data_dir.glob("sstab_*.dat"):
-            self.sstable_list.add(SSTable(sstable))
+            self.sstable_list.append(SSTable(sstable))
         
+    def marge_sstables(self):
+        if len(self.sstable_list) < 2:
+            return
+        
+        # compaction実行
+        copy_list = self.sstable_list[:]
+        marged_table = SSTable.compaction(self.sstable_list)
+        sstable = SSTable(self.data_dir, marged_table)
+        
+        self.sstable_list = [sstable]
+
+        # 古いsstableの削除
+        for table in copy_list:
+            table.delete()

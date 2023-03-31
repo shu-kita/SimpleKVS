@@ -62,5 +62,5 @@ def load_index(file_obj):
         length = int.from_bytes(byte_length,"little")
         key = file_obj.read(length)
         # positionを読み込む
-        position = int.from_bytes(file_obj(4), "little")
+        position = int.from_bytes(file_obj.read(4), "little")
         yield key.decode("utf-8"), position

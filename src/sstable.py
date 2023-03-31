@@ -12,7 +12,7 @@ class SSTable:
             now = int(datetime.now().timestamp())
             self.path = self.path / f"sstab_{now}.dat"
 
-        self.index_path = Path(self.path.name + ".index")
+        self.index_path = self.path.with_name(self.path.name + ".index")
         self.search_index = {}
 
         if self.path.exists(): # pathが存在する => SSTableを読み込む時
@@ -26,7 +26,7 @@ class SSTable:
         return f'{self.__class__.__name__}("{self.path}")'
     
     def __str__(self):
-        return self.path
+        return self.path.__str__()
     
     def __iter__(self):
         with open(self.path, mode="rb") as sstable:
@@ -67,12 +67,22 @@ class SSTable:
         # sstableから、valueを読み込む処理
         with open(self.path, mode="rb") as sstable:
             sstable.seek(position)
-            _, v = load_kv(sstable)
+            _, v = next(load_kv(sstable))
             return v
     
-    def delete_sstable(self):
+    def delete(self):
         """
         sstable, indexのファイルを削除する
         """
         self.path.unlink()
         self.index_path.unlink()
+    
+    @staticmethod
+    def compaction(sstable_list):
+        merged_table = {}
+        for sstable in sstable_list:
+            for k,v in sstable:
+                merged_table[k] = v
+
+        return merged_table
+
