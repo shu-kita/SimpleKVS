@@ -1,6 +1,6 @@
 # SimpleKVS
 
-SimpleKVSは、LSM Tree を実装したKey-Value Storeです。
+SimpleKVSは、LSM Tree を実装したKey-Value Storeです。  
 ※学習目的で作成
 
 ## 使用方法
@@ -19,18 +19,19 @@ kvs.delete("b")
 
 ## ファイル構成
 
-memtableの要素数が1024を超えたら、SSTableにflashされる
+memtableの要素数が1024を超えたら、SSTableにflashされる。
+flash時にindexファイルも作成される。
 ```
 data_dir
-    ├─sstab_<unixtime>.dat # データファイル
+    ├─sstab_<unixtime>.dat # SSTable
     ├─sstab_<unixtime>.dat.index # indexファイル
     └─wal.dat # Write-Ahead Log
 ```
 
-
 ## TODO
 
 * String以外のオブジェクトが格納されることを想定していない
+* Compactionがインスタンス作成時以外に実行されない
 * delete()でSSTableのデータを消せない。
 * Serverとして機能させたい(サーバ・クライアント)
 * エラー処理がない
