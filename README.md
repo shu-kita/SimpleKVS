@@ -1,32 +1,44 @@
 # SimpleKVS
 
-SimpleKVSは、簡単にKeyとValueのセット保存するためのPythonモジュールです。
+SimpleKVSは、LSM Tree を実装したKey-Value Storeです。
+※学習目的で作成
 
 ## 使用方法
 
-* Server
-    ```
-    python server.py
-    ```
-    ポート41224で待機する。
-
-
-* Client
+SimpleKVSクラスをインスタンス化して使う
 ```
-import client
+from simplekvs import SimpleKVS
 
-# get
-client.get("1")
+data_dir = "./data"
+kvs = SimpleKVS(data_dir)
 
-# put
-client.put("1", "test")
-
-# delete
-client.delete("1")
-
-# scan
-client.scan()
+kvs.get("a")
+kvs.set("b", "asdf")
+kvs.delete("b")
 ```
+
+## ファイル構成
+
+memtableの要素数が1024を超えたら、SSTableにflashされる
+```
+data_dir
+    ├─sstab_<unixtime>.dat # データファイル
+    ├─sstab_<unixtime>.dat.index # indexファイル
+    └─wal.dat # Write-Ahead Log
+```
+
+
+## TODO
+
+* String以外のオブジェクトが格納されることを想定していない
+* delete()でSSTableのデータを消せない。
+* Serverとして機能させたい(サーバ・クライアント)
+* エラー処理がない
+* ログの機能がない(以下の状況など)
+  * 起動ログ
+  * set, get, deleteの処理が走った時のログ
+  * compaction実行時
+  
 
 ## ライセンス
 

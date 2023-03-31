@@ -51,6 +51,9 @@ class SimpleKVS:
                 self.sstable_list.append(sstable)
                 self.memtable = {}
                 self.wal.clean_up()
+    
+    def delete(self, key):
+        del self.memtable[key]
 
     def recovery_wal(self, memtable):
         for k,v in self.wal.recovery():
