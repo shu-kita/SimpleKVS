@@ -31,16 +31,17 @@ class SimpleKVS:
     def get(self, key:str):
         # memtableから取得
         v = self.memtable.get(key)
-        if v is not None: # vがNoneではない = 値が取得できた => returnする
-            return v
+        # vがNoneではない = 値が取得できた => returnする
+        if v is not None:
+            return v if v != "__tombstone__" else None
         
         # SStableから取得(新しいSSTableから順に探す)
         for sstable in reversed(self.sstable_list):
             v = sstable.get(key)
             if v is not None: # vがNoneではない = 値が取得できた => returnする
-                return v
-        # memtable, SSTableともにない => Noneをreturn
-        return
+                return v if v != "__tombstone__" else None
+        # memtable, SSTableともにない -> Noneをreturnする
+        return None
     
     def set(self, key:str, value:str):
         with Lock():
@@ -54,13 +55,9 @@ class SimpleKVS:
                 self.wal.clean_up()
     
     def delete(self, key:str):
-        """
-        TODO
-            * memtableの削除しかしていない
-              SSTable側にキーがあれば、あるということになるし、Compaction時に復活する
-              -> Deleteできていない
-        """
-        del self.memtable[key]
+        if key in self.memtable:
+            self.set(key, "__tombstone__")
+
 
     def recovery_wal(self, memtable:dict):
         for k,v in self.wal.recovery():
@@ -82,6 +79,9 @@ class SimpleKVS:
         for sstable in self.sstable_list:
             for k,v in sstable:
                 merged_table[k] = v
+                # valueがtombstoneの時 -> keyを削除する
+                if v == "__tombstone__":
+                    del merged_table[k]
         merged_sstable = SSTable(self.data_dir, merged_table)
         
         self.sstable_list = [merged_sstable]
