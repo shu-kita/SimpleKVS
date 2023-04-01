@@ -7,13 +7,13 @@ from sstable import SSTable
 from wal import WAL
 
 class SimpleKVS:
-    def __init__(self, data_dir:str, memtable_limit=1024):
+    def __init__(self, data_dir:str, memtable_limit:int=1024):
         self.data_dir:Path = Path(data_dir)
         if not self.data_dir.exists(): # data_dirが無い => 作成する
             self.data_dir.mkdir(parents=True)
 
         self.memtable:dict = {}
-        self.memtable_limit:int = memtable_limit # memtableに持てるkey-valueの最大値
+        self.memtable_limit = memtable_limit # memtableに持てるkey-valueの最大値
 
         self.sstable_list:list[SSTable] = []
         self.load_sstables()
@@ -30,16 +30,16 @@ class SimpleKVS:
 
     def get(self, key:str):
         # memtableから取得
-        v = self.memtable.get(key)
+        value = self.memtable.get(key)
         # vがNoneではない = 値が取得できた => returnする
-        if v is not None:
-            return v if v != "__tombstone__" else None
+        if value is not None:
+            return value if value != "__tombstone__" else None
         
         # SStableから取得(新しいSSTableから順に探す)
         for sstable in reversed(self.sstable_list):
-            v = sstable.get(key)
-            if v is not None: # vがNoneではない = 値が取得できた => returnする
-                return v if v != "__tombstone__" else None
+            value = sstable.get(key)
+            if value is not None: # vがNoneではない = 値が取得できた => returnする
+                return value if value != "__tombstone__" else None
         # memtable, SSTableともにない -> Noneをreturnする
         return None
     
@@ -60,8 +60,8 @@ class SimpleKVS:
 
 
     def recovery_wal(self, memtable:dict):
-        for k,v in self.wal.recovery():
-            memtable[k] = v
+        for key,value in self.wal.recovery():
+            memtable[key] = value
     
     def load_sstables(self):
         for sstable in self.data_dir.glob("sstab_*.dat"):
@@ -73,19 +73,20 @@ class SimpleKVS:
             return
         
         # compaction処理
-        copy_list = self.sstable_list[:]
-
-        merged_table = {}
+        sstable_list_copy = self.sstable_list[:]
+        merged_memtable = {}
+        # 古いSSTableをreadして、memtableに格納する
         for sstable in self.sstable_list:
-            for k,v in sstable:
-                merged_table[k] = v
+            for key,value in sstable:
+                merged_memtable[key] = value
                 # valueがtombstoneの時 -> keyを削除する
-                if v == "__tombstone__":
-                    del merged_table[k]
-        merged_sstable = SSTable(self.data_dir, merged_table)
+                if value == "__tombstone__":
+                    del merged_memtable[key]
+        # mergeし、1つになったmemtableをSSTableに書き込む
+        merged_sstable = SSTable(self.data_dir, merged_memtable)
         
         self.sstable_list = [merged_sstable]
 
         # 古いsstableの削除
-        for old_sstable in copy_list:
+        for old_sstable in sstable_list_copy:
             old_sstable.delete()
