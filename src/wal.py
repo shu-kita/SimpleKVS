@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
+
 from pathlib import Path
 from io_utils import dump_kv, load_kv
 
 class WAL:
     def __init__(self, path:Path):
-        self.path = path
+        self.path:Path = path
         self.file = open(path, "ab+")
-    
+ 
     def __del__(self):
         self.file.close()
     

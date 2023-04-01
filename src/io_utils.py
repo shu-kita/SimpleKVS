@@ -20,7 +20,7 @@ def load_kv(file_obj):
     key,valueを読み込む
     """
 
-    def read_obj(file, byte_length):
+    def read_obj(file, byte_length:bytes):
         """
         byte→intに変換し、keyかvalueの長さを取得
         取得した長さ分fileからReadする

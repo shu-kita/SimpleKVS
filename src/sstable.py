@@ -1,19 +1,19 @@
+# -*- coding: utf-8 -*-
+
 from pathlib import Path
 from datetime import datetime
 from io_utils import dump_kv, load_kv, dump_index, load_index
 
 class SSTable:
     def __init__(self, path:Path, memtable:dict={}):
-        # 現在時刻(unixtimeで取得)
-        
         # sstab_<現在時刻>.datファイルのPathオブジェクトを作成
-        self.path = Path(path)
+        self.path:Path = Path(path)
         if self.path.is_dir():
-            now = int(datetime.now().timestamp())
+            now:int = int(datetime.now().timestamp())
             self.path = self.path / f"sstab_{now}.dat"
 
-        self.index_path = self.path.with_name(self.path.name + ".index")
-        self.search_index = {}
+        self.index_path:Path = self.path.with_name(self.path.name + ".index")
+        self.search_index:dict = {}
 
         if self.path.exists(): # pathが存在する => SSTableを読み込む時
             self.load_search_index()
@@ -56,7 +56,7 @@ class SSTable:
             for key, position in load_index(index_file):
                 self.search_index[key] = position
 
-    def get(self, key):
+    def get(self, key:str):
         """
         SSTableから、valueを読み込む
         """
@@ -75,14 +75,4 @@ class SSTable:
         sstable, indexのファイルを削除する
         """
         self.path.unlink()
-        self.index_path.unlink()
-    
-    @staticmethod
-    def compaction(sstable_list):
-        merged_table = {}
-        for sstable in sstable_list:
-            for k,v in sstable:
-                merged_table[k] = v
-
-        return merged_table
-
+        self.index_path.unlink()   

@@ -31,7 +31,7 @@ data_dir
 ## TODO
 
 * String以外のオブジェクトが格納されることを想定していない
-* Compactionがインスタンス作成時以外に実行されない
+* Compactionを定期的に実行する
 * delete()でSSTableのデータを消せない。
 * Serverとして機能させたい(サーバ・クライアント)
 * エラー処理がない
