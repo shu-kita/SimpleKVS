@@ -17,7 +17,7 @@ class SimpleKVS:
 
         self.sstable_list:list[SSTable] = []
         self.load_sstables()
-        self.compaction()
+        self.major_compaction()
 
         self.wal:WAL = WAL(self.data_dir / "wal")
         self.recovery_wal(self.memtable)
@@ -67,7 +67,7 @@ class SimpleKVS:
         for sstable in self.data_dir.glob("sstab_*.dat"):
             self.sstable_list.append(SSTable(sstable))
         
-    def compaction(self):
+    def major_compaction(self):
         # SSTableの数が1以下(2より下)のとき、compactionしない
         if len(self.sstable_list) < 2:
             return
@@ -90,3 +90,18 @@ class SimpleKVS:
         # 古いsstableの削除
         for old_sstable in sstable_list_copy:
             old_sstable.delete()
+
+    def minor_compaction(sstables:list[SSTable, SSTable]):
+        merged_memtable = {}
+        # 古いSSTableから順にdictに格納する
+        # SSTableは削除する。
+        # (呼び出し側で、順番を意識する)
+        for sstable in sstables:
+            for key, value in sstable:
+                merged_memtable[key] = value
+            sstable.delete()
+
+        # memtableを2つのSSTableの新しい方と同名のファイルを、
+        # Compaction後のSSTableとして再作成する。    
+        path = sstables[1].path
+        SSTable(path, merged_memtable)
