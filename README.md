@@ -17,6 +17,35 @@ kvs.set("b", "asdf")
 kvs.delete("b")
 ```
 
+### HTTP serverとして使う場合
+
+src配下で以下を実行する。
+(別のディレクトリから実行する際は、相対パスを合わせる)
+```
+python ./http_server.py
+```
+
+ポート30000でアクセスを待ち受ける
+また、実行ディレクトリ配下に「data」を作成し、そこにSSTable, index, walが保存される
+
+http_server.pyの以下の箇所で、ポート、ディレクトリを指定できる
+```
+PORT = 30000
+DATA_DIR = "./data" # SSTable, Index, walを保存するディレクトリ
+```
+
+curlなどのクライアントから実行する
+```
+# get
+curl -X GET http://<ホスト名>:30000/get?key=<キー>
+
+# set
+curl -X POST "http://<ホスト名>:30000/set?key=<キー>&value=<値>"
+
+# delete
+curl -X DELETE http://<ホスト名>:30000/delete?key=<キー>
+```
+
 ## ファイル構成
 
 memtableの要素数が1024を超えたら、SSTableにflashされる。
@@ -34,7 +63,6 @@ data_dir
   * byte化できるものならなんでも格納できるを目標にしたい
 * Compactionを定期的に実行する
   * minor, majorがあり、どちらをどんな条件で実行するかを決めないといけない
-* Serverとして機能させたい(サーバ・クライアント)
 * エラー処理がない
 * ログの機能がない(以下の状況など)
   * 起動ログ

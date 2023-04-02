@@ -1,9 +1,12 @@
 from flask import Flask, request
 from simplekvs import SimpleKVS
 
-app = Flask(__name__)
-kvs = SimpleKVS("./data")
 PORT = 30000
+DATA_DIR = "./data" # SSTable, Index, walを保存するディレクトリ
+
+app = Flask(__name__)
+kvs = SimpleKVS(DATA_DIR)
+
 
 @app.route('/get')
 def get():
