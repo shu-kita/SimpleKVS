@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 from pathlib import Path
 from threading import Lock
 
@@ -8,10 +9,12 @@ from wal import WAL
 
 class SimpleKVS:
     def __init__(self, data_dir:str, memtable_limit:int=1024):
+        logging.info("-----Start init SimpleKVS-----")
         self.lock = Lock()
-
+        
         self.data_dir:Path = Path(data_dir)
         if not self.data_dir.exists(): # data_dirが無い => 作成する
+            logging.info(f"Create data directory \'{data_dir}\'")
             self.data_dir.mkdir(parents=True)
 
         self.memtable:dict = {}
@@ -24,6 +27,8 @@ class SimpleKVS:
         self.wal:WAL = WAL(self.data_dir / "wal")
         self.recovery_wal(self.memtable)
 
+        logging.info("-----Finish init SimpleKVS-----")
+
     def __getitem__(self, key:str):
         return self.get(key)
 
@@ -31,6 +36,7 @@ class SimpleKVS:
         return self.get(key) is not None
 
     def get(self, key:str):
+        logging.info(f"get is executed. Key is {key}")
         # memtableから取得
         value = self.memtable.get(key)
         # vがNoneではない = 値が取得できた => returnする
@@ -43,9 +49,14 @@ class SimpleKVS:
             if value is not None: # vがNoneではない = 値が取得できた => returnする
                 return value if value != "__tombstone__" else None
         # memtable, SSTableともにない -> Noneをreturnする
+        
+        logging.info(f"Key \'{key}\' is not found.")
         return None
     
     def set(self, key:str, value:str):
+        if value != "__tombstone__":
+            logging.info(f"set is executed. key is {key} and value is {value}")
+
         with self.lock:
             self.wal.set(key, value)
             self.memtable[key] = value
@@ -57,6 +68,7 @@ class SimpleKVS:
                 self.wal.clean_up()
     
     def delete(self, key:str):
+        logging.info(f"delete is executed. Key is {key}")
         # tombstoneをsetする。
         # 実際に削除されるのはcompaction実行時
         if key in self.memtable:
@@ -67,12 +79,20 @@ class SimpleKVS:
             memtable[key] = value
     
     def load_sstables(self):
+        logging.info("Starting To load SSTables.")
+        num = 0
         for sstable in sorted(self.data_dir.glob("sstab_*.dat")):
             self.sstable_list.append(SSTable(sstable))
+            num += 1
+        
+        logging.info(f"{num} SSTables is loaded.")
         
     def major_compaction(self):
+        logging.info("Starting Major Compaction.")
         # SSTableの数が1以下(2より下)のとき、compactionしない
-        if len(self.sstable_list) < 2:
+        number_of_sstables = len(self.sstable_list)
+        if number_of_sstables < 2:
+            logging.info("Number of SSTable is less than 2")
             return
         
         # compaction処理
@@ -93,6 +113,8 @@ class SimpleKVS:
         # 古いsstableの削除
         for old_sstable in sstable_list_copy:
             old_sstable.delete()
+
+        logging.info(f"The number of SSTables has decreased from {number_of_sstables} to 1.")
 
     def minor_compaction(sstables:list[SSTable, SSTable]):
         merged_memtable = {}

@@ -58,20 +58,15 @@ data_dir
     ├─sstab_<unixtime>.dat # SSTable
     ├─sstab_<unixtime>.dat.index # indexファイル
     └─wal.dat # Write-Ahead Log
+log_dir
+    └─SimpleKVS.log # ApplicationのLogファイル
 ```
 
 ## TODO
 
-* String以外のオブジェクトが格納されることを想定していない
-  * byte化できるものならなんでも格納できるを目標にしたい
 * Compactionを定期的に実行する
   * minor, majorがあり、どちらをどんな条件で実行するかを決めないといけない
 * エラー処理がない
-* ログの機能がない(以下の状況など)
-  * 起動ログ
-  * set, get, deleteの処理が走った時のログ
-  * compaction実行時
-  
 
 ## ライセンス
 

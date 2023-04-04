@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 
 from pathlib import Path
 from io_utils import dump_kv, load_kv
@@ -16,6 +17,7 @@ class WAL:
         self.file.flush()
 
     def recovery(self):
+        logging.info(f"WAL recovery has been executed.")
         self.file.seek(0)
         for k, v in load_kv(self.file):
             yield k, v

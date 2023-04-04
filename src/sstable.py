@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 from pathlib import Path
 from datetime import datetime
 from io_utils import dump_kv, load_kv, dump_index, load_index
@@ -43,10 +44,12 @@ class SSTable:
                 position = sstable.tell()
                 dump_kv(sstable, k, v)
                 self.search_index[k] = position
+        logging.info(f"Create SSTable that name is \'{self.path}\'")
         # indexをindexファイルに書き込む処理
         with open(self.index_path, mode="ab") as index_file:
             for k, p in self.search_index.items():
                 dump_index(index_file, k, p)
+        logging.info(f"Create Index file that name is \'{self.index_path}\'")
 
     def load_search_index(self):
         """
