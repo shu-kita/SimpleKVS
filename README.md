@@ -37,15 +37,16 @@ DATA_DIR = "./data" # SSTable, Index, walを保存するディレクトリ
 ```
 
 curlなどのクライアントから実行する
+<>内は可変
 ```
 # get
-curl -X GET http://<ホスト名>:30000/get?key=<キー>
+curl -X GET http://<ホスト名>:30000/get/<key>
 
 # set
-curl -X POST "http://<ホスト名>:30000/set?key=<キー>&value=<値>"
+curl -X POST http://<ホスト名>:30000/set/<key> -d <値>
 
 # delete
-curl -X DELETE http://<ホスト名>:30000/delete?key=<キー>
+curl -X DELETE http://<ホスト名>:30000/delete/<key>
 ```
 
 ## ファイル構成

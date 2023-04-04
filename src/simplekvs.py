@@ -8,6 +8,8 @@ from wal import WAL
 
 class SimpleKVS:
     def __init__(self, data_dir:str, memtable_limit:int=1024):
+        self.lock = Lock()
+
         self.data_dir:Path = Path(data_dir)
         if not self.data_dir.exists(): # data_dirが無い => 作成する
             self.data_dir.mkdir(parents=True)
@@ -44,7 +46,7 @@ class SimpleKVS:
         return None
     
     def set(self, key:str, value:str):
-        with Lock():
+        with self.lock:
             self.wal.set(key, value)
             self.memtable[key] = value
             # memtableのサイズがlimitを超えたとき
@@ -55,16 +57,17 @@ class SimpleKVS:
                 self.wal.clean_up()
     
     def delete(self, key:str):
+        # tombstoneをsetする。
+        # 実際に削除されるのはcompaction実行時
         if key in self.memtable:
             self.set(key, "__tombstone__")
-
 
     def recovery_wal(self, memtable:dict):
         for key,value in self.wal.recovery():
             memtable[key] = value
     
     def load_sstables(self):
-        for sstable in self.data_dir.glob("sstab_*.dat"):
+        for sstable in sorted(self.data_dir.glob("sstab_*.dat")):
             self.sstable_list.append(SSTable(sstable))
         
     def major_compaction(self):
@@ -99,9 +102,8 @@ class SimpleKVS:
         for sstable in sstables:
             for key, value in sstable:
                 merged_memtable[key] = value
+            # SSTableのパスを取得
+            path = sstables[1].path
             sstable.delete()
-
-        # memtableを2つのSSTableの新しい方と同名のファイルを、
-        # Compaction後のSSTableとして再作成する。    
-        path = sstables[1].path
+        # 再作成
         SSTable(path, merged_memtable)
