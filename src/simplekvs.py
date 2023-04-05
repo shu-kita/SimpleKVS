@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from time import time
 from pathlib import Path
 from threading import Lock
 
@@ -8,7 +9,7 @@ from sstable import SSTable
 from wal import WAL
 
 class SimpleKVS:
-    def __init__(self, data_dir:str, memtable_limit:int=1024):
+    def __init__(self, data_dir:str, memtable_limit:int=1024, compaction_interval=3600):
         logging.info("-----Start init SimpleKVS-----")
         self.lock = Lock()
         
@@ -23,6 +24,9 @@ class SimpleKVS:
         self.sstable_list:list[SSTable] = []
         self.load_sstables()
         self.major_compaction()
+
+        self.compaction_interval = compaction_interval
+        self.last_compaction_time = time()
 
         self.wal:WAL = WAL(self.data_dir / "wal")
         self.recovery_wal(self.memtable)
@@ -66,7 +70,11 @@ class SimpleKVS:
                 self.sstable_list.append(sstable)
                 self.memtable = {}
                 self.wal.clean_up()
-    
+        
+            interval = time() - self.last_compaction_time
+            if interval >= self.compaction_interval:
+                self.minor_compaction()
+
     def delete(self, key:str):
         logging.info(f"delete is executed. Key is {key}")
         # tombstoneをsetする。
@@ -116,16 +124,25 @@ class SimpleKVS:
 
         logging.info(f"The number of SSTables has decreased from {number_of_sstables} to 1.")
 
-    def minor_compaction(sstables:list[SSTable, SSTable]):
+    def minor_compaction(self):
+        logging.info("Starting Minor Compaction.")
+        # SSTableの数が1以下(2より下)のとき、compactionしない
+        if len(self.sstable_list) < 2:
+            logging.info("Number of SSTable is less than 2")
+            return
+
         merged_memtable = {}
         # 古いSSTableから順にdictに格納する
         # SSTableは削除する。
-        # (呼び出し側で、順番を意識する)
+        sstables = self.sstable_list[:2] # compaction対象のSSTableを取得(リストの先頭2個)
         for sstable in sstables:
             for key, value in sstable:
                 merged_memtable[key] = value
             # SSTableのパスを取得
             path = sstables[1].path
+            self.sstable_list.remove(sstable)
             sstable.delete()
-        # 再作成
-        SSTable(path, merged_memtable)
+        # 再作成し、リストの先頭に入れる
+        # (一・二番目に古いSSTableをCompactionする前提。)
+        self.sstable_list.insert(0, SSTable(path, merged_memtable))
+        self.last_compaction_time = time()
