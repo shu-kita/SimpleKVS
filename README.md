@@ -3,6 +3,9 @@
 SimpleKVSは、LSM Tree を実装したKey-Value Storeです。  
 ※学習目的で作成
 
+4/14～
+　Javaの学習のため、Javaで実装中
+
 ## 使用方法
 
 SimpleKVSクラスをインスタンス化して使う
