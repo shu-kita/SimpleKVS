@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.nio.file.Files;
 
 import java.util.Map;
+import java.util.TreeMap;
 
 public class SSTable {
     private Path path;
@@ -17,7 +18,7 @@ public class SSTable {
     // deleteメソッド(ファイルの消去メソッド)
     // (その他、Pythonの時必要だったメソッドを見ながら実装する方針)
 
-    public SSTable(String path, Map<String, String> memtable) {
+    public SSTable(String path, TreeMap<String, String> memtable) {
         this.path = Paths.get(path);
 
         Long timestamp = System.currentTimeMillis();
