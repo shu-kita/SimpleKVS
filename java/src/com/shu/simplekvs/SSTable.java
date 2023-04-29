@@ -2,8 +2,11 @@ package com.shu.simplekvs;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.io.FileNotFoundException;
 import java.nio.file.Files;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.BufferedOutputStream;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -28,7 +31,22 @@ public class SSTable {
             this.path = this.path.resolve(file);
         }
 
-        //memtable書き込み処理
+        // SSTable書き込み処理
+        // TODO : index書き込み処理
+        try (
+            FileOutputStream fos = new FileOutputStream(this.path.toString());
+            BufferedOutputStream bos = new BufferedOutputStream(fos)
+        ) {
+            for (Map.Entry<String, String> kv : memtable.entrySet()){
+                String key = kv.getKey();
+                String value = kv.getValue();
+                IOUtils.dumpKV(bos, key, value);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public SSTable(String path) throws FileNotFoundException{
@@ -43,6 +61,8 @@ public class SSTable {
 
     public static void main(String[] args) throws FileNotFoundException{
         // System.out.println("test");
-        SSTable s = new SSTable("./adfsaf");
+        TreeMap<String, String> memtable = new TreeMap<String, String>();
+        memtable.put("key", "value");
+        SSTable s = new SSTable("./test", memtable);
     }
 }

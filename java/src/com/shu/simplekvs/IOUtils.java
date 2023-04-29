@@ -1,7 +1,6 @@
 package com.shu.simplekvs;
 
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -12,7 +11,10 @@ import java.util.Map;
 
 public class IOUtils {
     // KeyとValueをファイルに書き込む関数
-    public static void dumpKV(String key, String value) throws IOException {
+    public static void dumpKV(BufferedOutputStream bos, String key, String value) throws IOException {
+        // TODO : 書き込んだ位置を返すようにする必要がある？？
+        //        (もしくは、SSTable側で位置を管理する)
+
         // keyをbyte配列にエンコードし、長さを取得
         byte[][] KeyAndLen = IOUtils.getBytekeyAndLength(key);
         byte[] byteKey = KeyAndLen[0];
@@ -26,13 +28,8 @@ public class IOUtils {
         // byte配列の結合
         byte[] writeBytes = IOUtils.combineBytes(keyLenBytes, byteKey, valueLenBytes, byteValue);
 
-        String testfile = "test.dat"; // ファイル名(引数で引き取る)
         // TODO : 追記ができるようにする
-        try (
-            FileOutputStream fos = new FileOutputStream(testfile);
-            BufferedOutputStream bos = new BufferedOutputStream(fos)){
-                bos.write(writeBytes);
-        }
+        bos.write(writeBytes);
     }
 
     public static String[] loadKV(int position) throws IOException {
@@ -55,7 +52,7 @@ public class IOUtils {
             }
     }
 
-    public static void dumpIndex(String key, int position) throws IOException {
+    public static void dumpIndex(BufferedOutputStream bos, String key, int position) throws IOException {
         byte[][] KeyAndLen = IOUtils.getBytekeyAndLength(key);
         byte[] byteKey = KeyAndLen[0];
         byte[] keyLenBytes = KeyAndLen[1];
@@ -63,13 +60,8 @@ public class IOUtils {
         byte[] posBytes = ByteBuffer.allocate(4).putInt(position).array();
 
         byte[] writeBytes = IOUtils.combineBytes(keyLenBytes, byteKey, posBytes);
-        String testfile = "test.dat.index"; // ファイル名(引数で引き取るようにしたい)
         // TODO : 追記ができるようにする
-        try (
-            FileOutputStream fos = new FileOutputStream(testfile);
-            BufferedOutputStream bos = new BufferedOutputStream(fos)){
-                bos.write(writeBytes);
-        }
+        bos.write(writeBytes);
     }
 
     public static  Map<String, Integer> loadIndex() throws IOException {
@@ -136,12 +128,5 @@ public class IOUtils {
         System.arraycopy(byteArray3, 0, combinedArray, (length1+length2), length3);
 
         return combinedArray;
-    }
-
-    // test用
-    public static void main(String[] args) throws IOException{
-        IOUtils.dumpIndex("testKey", 100);
-        Map<String, Integer> idx = IOUtils.loadIndex();
-        System.out.println(idx.get("testKey"));
     }
 }
