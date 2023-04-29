@@ -46,6 +46,7 @@ public class SimpleKVS {
         this.memtable.put(key, Value);
         if (this.memtable.size() >= this.memtableLimit) {
             // SSTableにFlushする処理 
+            this.memtable = new TreeMap<String, String>();
         }
     }
 
@@ -55,10 +56,10 @@ public class SimpleKVS {
     }
 
     protected boolean isTombstone(String value) {
-        if (value.equals("__tombstone__")) {
-            return false;
-        } else {
+        if (!value.equals("__tombstone__")) {
             return true;
+        } else {
+            return false;
         }
     }
 
