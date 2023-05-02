@@ -1,6 +1,8 @@
 package com.shu.simplekvs;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -37,14 +39,15 @@ public class SSTable {
         this.dumpIndex(this.index);
     }
 
-    public SSTable(String path) throws FileNotFoundException{
+    public SSTable(String path) throws FileNotFoundException, IOException{
         this.path = Paths.get(path);
         
         if (!Files.exists(this.path)) {
             throw new FileNotFoundException(String.format("%s is not found.", path));
         }
 
-        // Index読み込み処理。
+        String indexPath = path + ".index";
+        this.index = loadIndex(indexPath);
     }
 
     private void dumpKV(Map<String, String> memtable) throws IOException{
@@ -77,13 +80,24 @@ public class SSTable {
     		}
     	}
     }
+    
+    private Map<String, Integer> loadIndex(String path) throws IOException{
+    	try(
+    		FileInputStream fis = new FileInputStream(path);
+    		BufferedInputStream bis = new BufferedInputStream(fis)
+    	) {
+    		Map<String, Integer> index = IOUtils.loadIndex(bis);
+    		return index;
+    	}
+    }
 
 
     public static void main(String[] args) throws FileNotFoundException, IOException{
         // System.out.println("test");
-        TreeMap<String, String> memtable = new TreeMap<String, String>();
-        memtable.put("key1", "value1");
-        memtable.put("key2", "value2");
-        SSTable s = new SSTable("./test", memtable);
+//        TreeMap<String, String> memtable = new TreeMap<String, String>();
+//        memtable.put("key1", "value1");
+//        memtable.put("key2", "value2");
+//        SSTable s = new SSTable("./test", memtable);
+        
     }
 }

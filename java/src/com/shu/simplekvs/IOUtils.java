@@ -56,29 +56,23 @@ public class IOUtils {
         byte[] posBytes = ByteBuffer.allocate(4).putInt(position).array();
 
         byte[] writeBytes = IOUtils.combineBytes(keyLenBytes, byteKey, posBytes);
-        // TODO : 追記ができるようにする
         bos.write(writeBytes);
     }
 
-    public static  Map<String, Integer> loadIndex() throws IOException {
-        String testfile = "test.dat.index";// ファイル名(引数で引き取るようにしたい)
+    public static  Map<String, Integer> loadIndex(BufferedInputStream bis) throws IOException {
         Map<String, Integer> index = new HashMap<>();
-        try (
-            FileInputStream fis = new FileInputStream(testfile);
-            BufferedInputStream bis = new BufferedInputStream(fis)){
-                byte[] bytes = new byte[4];
-                int read;
-                while ((read = bis.read(bytes, 0, bytes.length)) != -1) {
-                    int length = ByteBuffer.wrap(bytes).getInt();
-                    byte[] byteKey = new byte[length];
-                    bis.read(byteKey, 0, byteKey.length);
+        byte[] bytes = new byte[4];
+        int read;
+        while ((read = bis.read(bytes, 0, bytes.length)) != -1) {
+            int length = ByteBuffer.wrap(bytes).getInt();
+            byte[] byteKey = new byte[length];
+            bis.read(byteKey, 0, byteKey.length);
 
-                    bis.read(bytes, 0, bytes.length);
-                    String key = new String(byteKey);
-                    int position = ByteBuffer.wrap(bytes).getInt();
-                    index.put(key, position);
-                }
-            }
+            bis.read(bytes, 0, bytes.length);
+            String key = new String(byteKey);
+            int position = ByteBuffer.wrap(bytes).getInt();
+            index.put(key, position);
+        }
         return index;
     }
 
