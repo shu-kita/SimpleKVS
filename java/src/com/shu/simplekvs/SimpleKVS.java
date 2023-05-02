@@ -34,8 +34,8 @@ public class SimpleKVS {
     	String value = null;
         if (this.memtable.containsKey(key)) {
             value = this.memtable.get(key);
-            if (this.isTombstone(value)) {
-                value = null; 
+            if (this.isDeleted(value)) {
+                value = null;
             }
             return value;
         } else {
@@ -73,8 +73,8 @@ public class SimpleKVS {
         this.memtable.put(key, "__tombstone__");
     }
 
-    protected boolean isTombstone(String value) {
-        if (!value.equals("__tombstone__")) {
+    protected boolean isDeleted(String value) {
+        if (value.equals("__tombstone__")) {
             return true;
         } else {
             return false;

@@ -6,11 +6,14 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class SSTable {
     private Path path;
@@ -25,12 +28,24 @@ public class SSTable {
     public SSTable(String path, Map<String, String> memtable) throws IOException{
         this.path = Paths.get(path);
         Long timestamp = System.currentTimeMillis();
-
-        // TODO : 以下の修正
-        //         pathのディレクトリがなかったら、pathの名前のファイルができてしまう
-        if (Files.isDirectory(this.path)) {
+        
+        boolean isDir = Files.isDirectory(this.path);
+        boolean exists = Files.exists(this.path);
+        
+        if (isDir && exists) {
             Path file = Paths.get(String.format("sstab_%d.dat", timestamp));
             this.path = this.path.resolve(file);
+        } else {
+        	if (exists) {
+        		// pathがファイルの時の例外
+        		throw new FileAlreadyExistsException(String.format("%s is already exist.", this.path));
+        	} else if (isDir) {
+        		// pathが存在しない時の例外
+        		throw new NoSuchFileException(String.format("%s is not found.", this.path));
+        	} else {
+        		// その他(ファイルが存在しないなど)の例外
+        		throw new FileNotFoundException(String.format("%s is not found.", this.path));
+        	}
         }
 
         this.index = new HashMap<>();
@@ -41,7 +56,8 @@ public class SSTable {
     public SSTable(String path) throws FileNotFoundException, IOException{
         this.path = Paths.get(path);
         
-        if (!Files.exists(this.path)) {
+        // 
+        if (!Files.exists(this.path) || Files.isDirectory(this.path)) {
             throw new FileNotFoundException(String.format("%s is not found.", path));
         }
 
@@ -54,7 +70,7 @@ public class SSTable {
             FileOutputStream fos = new FileOutputStream(this.path.toString());
             BufferedOutputStream bos = new BufferedOutputStream(fos)
             ) {
-        	    // indexにpositionをPutし、ファイルに書き込む
+        	    // indexにpositionをPutし、Key,Valueをファイルに書き込む
                 int position = 0;
                 for (Map.Entry<String, String> kv : memtable.entrySet()){
                     String key = kv.getKey();
@@ -106,10 +122,10 @@ public class SSTable {
 
     public static void main(String[] args) throws FileNotFoundException, IOException{
         // System.out.println("test");
-//        TreeMap<String, String> memtable = new TreeMap<String, String>();
-//        memtable.put("key1", "value1");
-//        memtable.put("key2", "value2");
-//        SSTable s = new SSTable("./test", memtable);
-        
+        TreeMap<String, String> memtable = new TreeMap<String, String>();
+        memtable.put("key1", "value1");
+        memtable.put("key2", "value2");
+        SSTable s = new SSTable("./tea", memtable);
+        System.out.println(s);
     }
 }

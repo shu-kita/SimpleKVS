@@ -1,34 +1,62 @@
 package com.shu.simplekvs;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class WAL {
-    Path path;
+    private Path path;
 
     public WAL(String path) {
         this.path = Paths.get(path);
+        Path file = Paths.get(String.format("wal.dat"));
+        this.path = this.path.resolve(file);        
     }
 
     public WAL() {
         this(".");
     }
 
-    protected void set(String key, String value) {
-        // WALへの書き込み処理
+    protected void set(String key, String value) throws IOException{
+    	try (
+            FileOutputStream fos = new FileOutputStream(this.path.toString(),true);
+            BufferedOutputStream bos = new BufferedOutputStream(fos)
+        ) {
+    		IOUtils.dumpKV(bos, key, value);
+    	}
     }
 
-    protected void recovery() {
-        // WALからMemtableを復元する処理
-        // TreeMapを返すべき？？？
+    protected Map<String, String> recovery() throws IOException{
+    	Map<String, String> memtable = new TreeMap<String, String>();
+    	try(
+        	FileInputStream fis = new FileInputStream(this.path.toString());
+        	BufferedInputStream bis = new BufferedInputStream(fis)
+        ) {
+    		while (bis.available() > 1) {
+    			String[] kv = IOUtils.loadKV(bis, 0);
+    			String key = kv[0];
+    			String value = kv[1];
+    			memtable.put(key, value);
+    		}
+    		return memtable;
+    	}
     }
 
-    protected void cleanUp() {
-        // WALを空にする
+    protected void cleanUp() throws IOException{
+    	FileOutputStream fos = new FileOutputStream(this.path.toString(), false);
+    	fos.close();
     }
 
-    public static void main(String args []) {
-        WAL wal = new WAL();
-        System.out.println(wal);
+    public static void main(String args []) throws IOException{
+        WAL wal = new WAL("test");
+        //wal.set("test", "test2");
+        //wal.recovery();
+        System.out.println(wal.path);
     }
 }
