@@ -1,20 +1,17 @@
 package com.shu.simplekvs;
 
-import java.io.FileInputStream;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
 public class IOUtils {
     // KeyとValueをファイルに書き込む関数
     public static void dumpKV(BufferedOutputStream bos, String key, String value) throws IOException {
-        // TODO : 書き込んだ位置を返すようにする必要がある？？
-        //        (もしくは、SSTable側で位置を管理する)
-
         // keyをbyte配列にエンコードし、長さを取得
         byte[][] KeyAndLen = IOUtils.getBytekeyAndLength(key);
         byte[] byteKey = KeyAndLen[0];
@@ -28,7 +25,6 @@ public class IOUtils {
         // byte配列の結合
         byte[] writeBytes = IOUtils.combineBytes(keyLenBytes, byteKey, valueLenBytes, byteValue);
 
-        // TODO : 追記ができるようにする
         bos.write(writeBytes);
     }
 
