@@ -1,23 +1,24 @@
 package com.shu.simplekvs;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.TreeMap;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class SimpleKVS {
     private Path dataDir;
     private Map<String, String> memtable;
     private int memtableLimit;
-    private List<String> sstableList;
+    private List<SSTable> sstableList;
 
     public SimpleKVS(String dataDir, int memtableLimit) {
         this.dataDir = Paths.get(dataDir);
         this.memtable = new TreeMap<String, String>();
         this.memtableLimit = memtableLimit;
-        this.sstableList = new ArrayList<String>(); 
+        this.sstableList = new ArrayList<SSTable>(); 
     }
 
     public SimpleKVS(String dataDir) {
@@ -29,15 +30,26 @@ public class SimpleKVS {
     }
 
     public String get(String key) {
+    	// TODO : valueをどこでreturnするか決めないといけない
+    	String value = null;
         if (this.memtable.containsKey(key)) {
-            String value = this.memtable.get(key);
+            value = this.memtable.get(key);
             if (this.isTombstone(value)) {
                 value = null; 
             }
             return value;
         } else {
-            // SSTableから読み込む処理
-            return "not found!";
+        	try {
+        		for (SSTable sstable : this.sstableList) {
+                	value = sstable.get(key);
+                	if (value != null) {
+                		return value;
+                	}
+            	}
+        	} catch (IOException e) {
+        		e.printStackTrace();
+        	}
+        	return value;
         }
     }
 
@@ -45,8 +57,14 @@ public class SimpleKVS {
         // walへの書き込み処理
         this.memtable.put(key, Value);
         if (this.memtable.size() >= this.memtableLimit) {
-            // SSTableにFlushする処理 
-            this.memtable = new TreeMap<String, String>();
+        	try {
+        		SSTable sstable = new SSTable(this.dataDir.toString() , this.memtable);
+        		this.sstableList.add(sstable);
+                this.memtable = new TreeMap<String, String>();
+        	} catch (IOException e){
+        		e.printStackTrace();
+        	}
+        	
         }
     }
 

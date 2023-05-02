@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class SSTable {
     private Path path;
@@ -23,7 +22,7 @@ public class SSTable {
     // deleteメソッド(ファイルの消去メソッド)
     // (その他、Pythonの時必要だったメソッドを見ながら実装する方針)
 
-    public SSTable(String path, TreeMap<String, String> memtable) throws IOException{
+    public SSTable(String path, Map<String, String> memtable) throws IOException{
         this.path = Paths.get(path);
         Long timestamp = System.currentTimeMillis();
 
@@ -89,6 +88,19 @@ public class SSTable {
     		Map<String, Integer> index = IOUtils.loadIndex(bis);
     		return index;
     	}
+    }
+    
+    protected String get(String key) throws IOException{
+    	int position = this.index.get(key);
+    	String value = "";
+    	try (
+            FileInputStream fis = new FileInputStream(this.path.toString());
+    		BufferedInputStream bis = new BufferedInputStream(fis);
+        ) {
+    		String[] kv = IOUtils.loadKV(bis, position);
+    		value = kv[1];
+    	}
+    	return value;
     }
 
 

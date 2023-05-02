@@ -2,7 +2,6 @@ package com.shu.simplekvs;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -28,33 +27,25 @@ public class IOUtils {
         bos.write(writeBytes);
     }
 
-    public static String[] loadKV(int position) throws IOException {
-        String testfile = "test.dat"; // ファイル名(引数で引き取る)
-        try (
-            FileInputStream fis = new FileInputStream(testfile);
-            BufferedInputStream bis = new BufferedInputStream(fis)){
-                String[] kvPair = new String[2]; 
-                bis.skip(position);
-                for (int i = 0 ; i < 2; i++) {
-                    byte[] bytes = new byte[4];
-                    bis.read(bytes, 0, bytes.length);
-                    int length = ByteBuffer.wrap(bytes).getInt();
-                    byte[] byteStr = new byte[length];
-                    bis.read(byteStr, 0, byteStr.length);
-                    kvPair[i] = new String(byteStr);
-                }
-                // indexの0をキー、1をバリューとするString配列を返す
-                return kvPair;
-            }
+    public static String[] loadKV(BufferedInputStream bis, int position) throws IOException {
+        String[] kvPair = new String[2]; 
+        bis.skip(position);
+        for (int i = 0 ; i < 2; i++) {
+            byte[] bytes = new byte[4];
+            bis.read(bytes, 0, bytes.length);
+            int length = ByteBuffer.wrap(bytes).getInt();
+            byte[] byteStr = new byte[length];
+            bis.read(byteStr, 0, byteStr.length);
+            kvPair[i] = new String(byteStr);
+        }
+        return kvPair;
     }
 
     public static void dumpIndex(BufferedOutputStream bos, String key, int position) throws IOException {
         byte[][] KeyAndLen = IOUtils.getBytekeyAndLength(key);
         byte[] byteKey = KeyAndLen[0];
         byte[] keyLenBytes = KeyAndLen[1];
-
         byte[] posBytes = ByteBuffer.allocate(4).putInt(position).array();
-
         byte[] writeBytes = IOUtils.combineBytes(keyLenBytes, byteKey, posBytes);
         bos.write(writeBytes);
     }
@@ -76,7 +67,7 @@ public class IOUtils {
         return index;
     }
 
-    protected static byte[][] getBytekeyAndLength(String key) {
+    private static byte[][] getBytekeyAndLength(String key) {
         byte[][] bytes = new byte[2][];
         bytes[0] = key.getBytes(StandardCharsets.UTF_8);
         int keyLength = bytes[0].length;
@@ -85,7 +76,7 @@ public class IOUtils {
     }
 
     // 4つのByte配列を結合する関数
-    protected static byte[] combineBytes(byte[] byteArray1, byte[] byteArray2, byte[] byteArray3, byte[] byteArray4) {
+    private static byte[] combineBytes(byte[] byteArray1, byte[] byteArray2, byte[] byteArray3, byte[] byteArray4) {
         // 各配列の長さを取得
         int length1 = byteArray1.length;
         int length2 = byteArray2.length;
@@ -104,7 +95,7 @@ public class IOUtils {
     }
 
     // 3つのByte配列を結合する関数
-    protected static byte[] combineBytes(byte[] byteArray1, byte[] byteArray2, byte[] byteArray3) {
+    private static byte[] combineBytes(byte[] byteArray1, byte[] byteArray2, byte[] byteArray3) {
         // 各配列の長さを取得
         int length1 = byteArray1.length;
         int length2 = byteArray2.length;
