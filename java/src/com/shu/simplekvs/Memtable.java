@@ -13,13 +13,13 @@ public class Memtable extends TreeMap<String,String>{
         this(1024);
     }
 
-    private boolean is_overLimit() {
+    private boolean isOverLimit() {
         return this.sizeLimit <= this.size();
     }
 
     public static void main(String[] args) {
         Memtable mt = new Memtable(100);
-        boolean res = mt.is_overLimit();
+        boolean res = mt.isOverLimit();
         System.out.println(res);
     }
 }

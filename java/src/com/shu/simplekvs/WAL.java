@@ -13,8 +13,8 @@ import java.util.TreeMap;
 public class WAL {
     private Path path;
 
-    public WAL(String path) {
-        this.path = Paths.get(path);
+    public WAL(String dataDir) {
+        this.path = Paths.get(dataDir);
         Path file = Paths.get(String.format("wal.dat"));
         this.path = this.path.resolve(file);        
     }

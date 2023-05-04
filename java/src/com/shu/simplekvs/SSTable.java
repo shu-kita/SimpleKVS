@@ -56,7 +56,6 @@ public class SSTable {
     public SSTable(String path) throws FileNotFoundException, IOException{
         this.path = Paths.get(path);
         
-        // 
         if (!Files.exists(this.path) || Files.isDirectory(this.path)) {
             throw new FileNotFoundException(String.format("%s is not found.", path));
         }
@@ -117,6 +116,10 @@ public class SSTable {
     		value = kv[1];
     	}
     	return value;
+    }
+    
+    protected boolean containsKey(String key) {
+    	return this.index.containsKey(key);
     }
 
 

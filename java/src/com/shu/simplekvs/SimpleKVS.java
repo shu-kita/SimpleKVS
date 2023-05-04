@@ -1,5 +1,6 @@
 package com.shu.simplekvs;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,12 +14,38 @@ public class SimpleKVS {
     private Map<String, String> memtable;
     private int memtableLimit;
     private List<SSTable> sstableList;
+    private WAL wal;
 
     public SimpleKVS(String dataDir, int memtableLimit) {
         this.dataDir = Paths.get(dataDir);
         this.memtable = new TreeMap<String, String>();
         this.memtableLimit = memtableLimit;
-        this.sstableList = new ArrayList<SSTable>(); 
+        this.sstableList = new ArrayList<SSTable>();
+        
+        // SSTable読み込み処理
+        File[] files = new File(dataDir).listFiles();
+        for (File file : files) {
+        	String path = file.getPath();
+        	if (path.startsWith("sstab") && path.endsWith(".dat")) {
+        		try {
+        			this.sstableList.add(new SSTable(path));
+        		} catch (IOException e) {
+        			// TODO : SSTableが読み込めなかった時の処理
+        			e.printStackTrace();
+        		}
+        	}
+        }
+        
+        this.wal = new WAL(dataDir);
+        
+        try {
+        	this.wal.recovery();
+        } catch (IOException e) {
+        	// TODO
+        	//   * 強制終了させる処理
+        	//   * log出力処理
+        	e.printStackTrace();
+        }        
     }
 
     public SimpleKVS(String dataDir) {
@@ -30,27 +57,23 @@ public class SimpleKVS {
     }
 
     public String get(String key) {
-    	// TODO : valueをどこでreturnするか決めないといけない
     	String value = null;
         if (this.memtable.containsKey(key)) {
             value = this.memtable.get(key);
-            if (this.isDeleted(value)) {
-                value = null;
-            }
-            return value;
+            value = this.isDeleted(value) ? null : value;
         } else {
         	try {
         		for (SSTable sstable : this.sstableList) {
-                	value = sstable.get(key);
-                	if (value != null) {
-                		return value;
+                	if (sstable.containsKey(key)) {
+                		value = sstable.get(key);
+                		break;
                 	}
             	}
         	} catch (IOException e) {
         		e.printStackTrace();
         	}
-        	return value;
         }
+        return value;
     }
 
     public void set(String key, String Value) {
@@ -74,17 +97,13 @@ public class SimpleKVS {
     }
 
     protected boolean isDeleted(String value) {
-        if (value.equals("__tombstone__")) {
-            return true;
-        } else {
-            return false;
-        }
+        return value.equals("__tombstone__");
     }
 
     public static void main(String[] args) {
         //test用
 
-        SimpleKVS skvs = new SimpleKVS(".", 1024);
+        SimpleKVS skvs = new SimpleKVS("./test", 1024);
         System.out.println(skvs.memtable);
         System.out.println(skvs.dataDir);
         System.out.println(skvs.memtableLimit);
