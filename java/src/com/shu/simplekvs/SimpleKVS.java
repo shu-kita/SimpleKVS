@@ -2,6 +2,7 @@ package com.shu.simplekvs;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -18,9 +19,20 @@ public class SimpleKVS {
 
     public SimpleKVS(String dataDir, int memtableLimit) {
         this.dataDir = Paths.get(dataDir);
+        
+        // ディレクトリが存在しない場合、作成する
+        if (!Files.exists(this.dataDir)) {
+        	try {
+        		Files.createDirectories(this.dataDir);
+        	} catch (IOException e) {
+        		e.printStackTrace();
+        	}
+        }
+        
         this.memtable = new TreeMap<String, String>();
         this.memtableLimit = memtableLimit;
         this.sstableList = new ArrayList<SSTable>();
+        
         
         // SSTable読み込み処理
         File[] files = new File(dataDir).listFiles();
@@ -45,7 +57,7 @@ public class SimpleKVS {
         	//   * 強制終了させる処理
         	//   * log出力処理
         	e.printStackTrace();
-        }        
+        }
     }
 
     public SimpleKVS(String dataDir) {
