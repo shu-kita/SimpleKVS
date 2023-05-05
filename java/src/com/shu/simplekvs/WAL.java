@@ -52,11 +52,4 @@ public class WAL {
     	FileOutputStream fos = new FileOutputStream(this.path.toString(), false);
     	fos.close();
     }
-
-    public static void main(String args []) throws IOException{
-        WAL wal = new WAL("test");
-        //wal.set("test", "test2");
-        //wal.recovery();
-        System.out.println(wal.path);
-    }
 }

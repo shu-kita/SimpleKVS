@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class SSTable {
     private Path path;
@@ -120,15 +119,5 @@ public class SSTable {
     
     protected boolean containsKey(String key) {
     	return this.index.containsKey(key);
-    }
-
-
-    public static void main(String[] args) throws FileNotFoundException, IOException{
-        // System.out.println("test");
-        TreeMap<String, String> memtable = new TreeMap<String, String>();
-        memtable.put("key1", "value1");
-        memtable.put("key2", "value2");
-        SSTable s = new SSTable("./tea", memtable);
-        System.out.println(s);
     }
 }

@@ -33,7 +33,6 @@ public class SimpleKVS {
         this.memtableLimit = memtableLimit;
         this.sstableList = new ArrayList<SSTable>();
         
-        
         // SSTable読み込み処理
         File[] files = new File(dataDir).listFiles();
         for (File file : files) {
@@ -91,9 +90,9 @@ public class SimpleKVS {
     	return this.isDeleted(value) ? null : value;
     }
 
-    public void set(String key, String Value) {
-        // walへの書き込み処理
-        this.memtable.put(key, Value);
+    public void set(String key, String value) {
+    	this.writeWAL(key, value);
+        this.memtable.put(key, value);
         if (this.memtable.size() >= this.memtableLimit) {
         	try {
         		SSTable sstable = new SSTable(this.dataDir.toString() , this.memtable);
@@ -107,28 +106,19 @@ public class SimpleKVS {
     }
 
     public void delete(String key) {
-        // walへの書き込み処理
+        this.writeWAL(key, "__tombstone__");
         this.memtable.put(key, "__tombstone__");
     }
 
     protected boolean isDeleted(String value) {
         return value.equals("__tombstone__");
     }
-
-    public static void main(String[] args) {
-        //test用
-
-        SimpleKVS skvs = new SimpleKVS("./test", 1024);
-        System.out.println(skvs.memtable);
-        System.out.println(skvs.dataDir);
-        System.out.println(skvs.memtableLimit);
-        System.out.println(skvs.sstableList);
-        skvs.set("1", "mura");
-        for (int i=0 ;  i < 1050; i++){
-            String num = Integer.valueOf(i).toString();
-            skvs.set(num, "kita");
-        }
-        System.out.println(skvs.get("19192939"));
-        //skvs.memtable;
+    
+    private void writeWAL(String key, String value) {
+    	try {
+    		this.wal.set(key, value);
+    	} catch (IOException e) {
+    		e.printStackTrace();
+    	}
     }
 }
