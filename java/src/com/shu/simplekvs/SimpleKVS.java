@@ -57,11 +57,13 @@ public class SimpleKVS {
     }
 
     public String get(String key) {
-    	String value = null;
-        if (this.memtable.containsKey(key)) {
+    	String value = "";
+    	if (this.memtable.containsKey(key)) {
+    		// memtableから取得する
             value = this.memtable.get(key);
             value = this.isDeleted(value) ? null : value;
         } else {
+        	// SSTableから取得する
         	try {
         		for (SSTable sstable : this.sstableList) {
                 	if (sstable.containsKey(key)) {
@@ -73,7 +75,8 @@ public class SimpleKVS {
         		e.printStackTrace();
         	}
         }
-        return value;
+    	// 削除されているかチェックしてreturn
+    	return this.isDeleted(value) ? null : value;
     }
 
     public void set(String key, String Value) {
