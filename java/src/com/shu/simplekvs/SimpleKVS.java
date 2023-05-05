@@ -32,24 +32,13 @@ public class SimpleKVS {
         
         this.memtable = new TreeMap<String, String>();
         this.memtableLimit = memtableLimit;
-        this.sstableList = new ArrayList<SSTable>();
         
         // SSTable読み込み処理
-        File[] files = new File(dataDir).listFiles();
-        for (File file : files) {
-        	String path = file.getPath();
-        	if (path.startsWith("sstab") && path.endsWith(".dat")) {
-        		try {
-        			this.sstableList.add(new SSTable(path));
-        		} catch (IOException e) {
-        			// TODO : SSTableが読み込めなかった時の処理
-        			e.printStackTrace();
-        		}
-        	}
-        }
-        
+        this.sstableList = new ArrayList<SSTable>();
+        this.loadSSTables(dataDir);
+
+        // WAL読込み処理
         this.wal = new WAL(dataDir);
-        
         try {
         	this.wal.recovery();
         } catch (IOException e) {
@@ -69,23 +58,11 @@ public class SimpleKVS {
     }
 
     public String get(String key) {
-    	String value = "";
+    	String value;
     	if (this.memtable.containsKey(key)) {
-    		// memtableから取得する
             value = this.memtable.get(key);
-            value = this.isDeleted(value) ? null : value;
         } else {
-        	// SSTableから取得する
-        	try {
-        		for (SSTable sstable : this.sstableList) {
-                	if (sstable.containsKey(key)) {
-                		value = sstable.get(key);
-                		break;
-                	}
-            	}
-        	} catch (IOException e) {
-        		e.printStackTrace();
-        	}
+        	value = this.getFromSSTable(key);
         }
     	// 削除されているかチェックしてreturn
     	return this.isDeleted(value) ? null : value;
@@ -128,5 +105,36 @@ public class SimpleKVS {
     	} catch (IOException e) {
     		e.printStackTrace();
     	}
+    }
+    
+    private void loadSSTables(String dataDir) {
+        File[] files = new File(dataDir).listFiles();
+        for (File file : files) {
+        	String path = file.getPath();
+        	if (path.startsWith("sstab") && path.endsWith(".dat")) {
+        		try {
+        			this.sstableList.add(new SSTable(path));
+        		} catch (IOException e) {
+        			// TODO : SSTableが読み込めなかった時の処理
+        			e.printStackTrace();
+        		}
+        	}
+        }
+ 
+    }
+    
+    private String getFromSSTable(String key) {
+    	String value = "";
+    	try {
+    		for (SSTable sstable : this.sstableList) {
+            	if (sstable.containsKey(key)) {
+            		value = sstable.get(key);
+            		break;
+            	}
+        	}
+    	} catch (IOException e) {
+    		e.printStackTrace();
+    	}
+    	return value;
     }
 }

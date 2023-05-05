@@ -18,12 +18,6 @@ public class SSTable {
     private Path path;
     private Map<String, Integer> index;
 
-    // 以下のメソッドを実装する予定。
-    // コンストラクタ(Flush時用(SSTableファイルに書き込む)と読み込み(Index読み込み用)の２種)
-    // getメソッド
-    // deleteメソッド(ファイルの消去メソッド)
-    // (その他、Pythonの時必要だったメソッドを見ながら実装する方針)
-
     public SSTable(String path, Map<String, String> memtable) throws IOException{
         this.path = Paths.get(path);
         Long timestamp = System.currentTimeMillis();
@@ -63,6 +57,26 @@ public class SSTable {
         this.index = loadIndex(indexPath);
     }
 
+    protected String get(String key) throws IOException{
+    	int position = this.index.get(key);
+    	String value = "";
+    	try (
+            FileInputStream fis = new FileInputStream(this.path.toString());
+    		BufferedInputStream bis = new BufferedInputStream(fis);
+        ) {
+    		String[] kv = IOUtils.loadKV(bis, position);
+    		value = kv[1];
+    	}
+    	return value;
+    }
+    
+    protected boolean containsKey(String key) {
+    	return this.index.containsKey(key);
+    }
+    
+    /*
+     * 以下、privateメソッド
+     */
     private void dumpKV(Map<String, String> memtable) throws IOException{
         try (
             FileOutputStream fos = new FileOutputStream(this.path.toString());
@@ -102,22 +116,5 @@ public class SSTable {
     		Map<String, Integer> index = IOUtils.loadIndex(bis);
     		return index;
     	}
-    }
-    
-    protected String get(String key) throws IOException{
-    	int position = this.index.get(key);
-    	String value = "";
-    	try (
-            FileInputStream fis = new FileInputStream(this.path.toString());
-    		BufferedInputStream bis = new BufferedInputStream(fis);
-        ) {
-    		String[] kv = IOUtils.loadKV(bis, position);
-    		value = kv[1];
-    	}
-    	return value;
-    }
-    
-    protected boolean containsKey(String key) {
-    	return this.index.containsKey(key);
     }
 }
