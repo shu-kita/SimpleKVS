@@ -2,6 +2,7 @@ package com.shu.simplekvs;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -110,13 +111,20 @@ public class SimpleKVS {
         this.memtable.put(key, "__tombstone__");
     }
 
-    protected boolean isDeleted(String value) {
+
+    /*
+     以下、privateのメソッド
+     */ 
+    private boolean isDeleted(String value) {
         return value.equals("__tombstone__");
     }
     
     private void writeWAL(String key, String value) {
     	try {
     		this.wal.set(key, value);
+    	} catch (OverlappingFileLockException e) {
+    		// TODO : Lockできなかった時の処理(ログ出力？？）
+    		e.printStackTrace();
     	} catch (IOException e) {
     		e.printStackTrace();
     	}

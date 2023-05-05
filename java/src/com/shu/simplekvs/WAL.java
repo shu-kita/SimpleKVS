@@ -5,6 +5,9 @@ import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -23,12 +26,20 @@ public class WAL {
         this(".");
     }
 
-    protected void set(String key, String value) throws IOException{
+    protected void set(String key, String value) throws IOException, OverlappingFileLockException{
     	try (
             FileOutputStream fos = new FileOutputStream(this.path.toString(),true);
-            BufferedOutputStream bos = new BufferedOutputStream(fos)
+            BufferedOutputStream bos = new BufferedOutputStream(fos);
+    		FileChannel fc = fos.getChannel();
+    		FileLock lock = fc.tryLock();
         ) {
-    		IOUtils.dumpKV(bos, key, value);
+    		if (lock != null) {
+    			IOUtils.dumpKV(bos, key, value);
+    		} else {
+    			throw new OverlappingFileLockException();
+    		}
+    		
+    		
     	}
     }
 
