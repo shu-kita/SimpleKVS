@@ -2,6 +2,7 @@ package com.shu.simplekvs;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import com.sun.net.httpserver.HttpServer;
 
 public class SimpleKVS {
     private Path dataDir;
@@ -57,6 +60,10 @@ public class SimpleKVS {
         this(".", 1024);
     }
 
+    public static void main(String[] args) {
+    	SimpleKVS.run();
+    }
+    
     public String get(String key) {
     	String value;
     	if (this.memtable.containsKey(key)) {
@@ -137,4 +144,17 @@ public class SimpleKVS {
     	}
     	return value;
     }
+    
+    private static void run() {
+    	int port = 8000;
+    	try {
+    	HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+    	server.createContext("/", new KVSRequestHandler());
+    	System.out.println("MyServer wakes up: port=" + port);
+    	server.start();
+    	} catch (IOException e) {
+    		e.printStackTrace();
+    	}
+    }
+    
 }
