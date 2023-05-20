@@ -1,8 +1,11 @@
 package com.shu.simplekvs;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.io.InputStreamReader;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,8 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
-import com.sun.net.httpserver.HttpServer;
 
 public class SimpleKVS {
     private Path dataDir;
@@ -58,10 +59,6 @@ public class SimpleKVS {
 
     public SimpleKVS() {
         this(".", 1024);
-    }
-
-    public static void main(String[] args) {
-    	SimpleKVS.run();
     }
     
     public String get(String key) {
@@ -127,7 +124,6 @@ public class SimpleKVS {
         		}
         	}
         }
- 
     }
     
     private String getFromSSTable(String key) {
@@ -146,15 +142,53 @@ public class SimpleKVS {
     }
     
     private static void run() {
-    	int port = 8000;
-    	try {
-    	HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
-    	server.createContext("/", new KVSRequestHandler());
-    	System.out.println("MyServer wakes up: port=" + port);
-    	server.start();
+    	final int PORT = 8000;
+    	System.out.println("start >>>");
+
+    	try (
+    			ServerSocket server = new ServerSocket(PORT);
+    			Socket socket = server.accept();
+    			BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
+    	) {
+    		
+    		String header = SimpleKVS.readHeader(br);
+            System.out.println(header);
+            
+            String method = header.split(" ")[0];
+            System.out.println(method);
     	} catch (IOException e) {
     		e.printStackTrace();
     	}
+            System.out.println("<<< end");
     }
     
+    private static String readHeader(BufferedReader br) throws IOException{
+    	String line = br.readLine();
+    	StringBuilder header = new StringBuilder();
+    	while(line != null && !line.isEmpty()) {
+    		header.append(line + "\n");
+    		line = br.readLine();
+    	}
+    	return header.toString();
+    }
+    
+    private static void switchMethod(String method) {
+    	switch (method) {
+    		case "GET":
+    			// get処理
+    			break;
+    		case "PUT":
+    			// put処理
+    			break;
+    		case "DELETE":
+    			// delete処理
+    			break;
+    	}
+    }
+    
+    public static void main(String[] args) {
+    	SimpleKVS.run();
+    }
+
 }
+
