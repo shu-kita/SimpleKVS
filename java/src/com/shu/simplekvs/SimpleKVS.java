@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.channels.OverlappingFileLockException;
@@ -142,53 +143,63 @@ public class SimpleKVS {
     }
     
     private static void run() {
-    	final int PORT = 8000;
-    	System.out.println("start >>>");
+    	final int PORT = 10000;
 
-    	try (
-    			ServerSocket server = new ServerSocket(PORT);
-    			Socket socket = server.accept();
-    			BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
-    	) {
-    		
-    		String header = SimpleKVS.readHeader(br);
-            System.out.println(header);
-            
-            String method = header.split(" ")[0];
-            System.out.println(method);
+    	try (ServerSocket server = new ServerSocket(PORT)) {
+    		System.out.println("start");
+    		while(true) {
+        		Socket socket = server.accept();
+        		InputStreamReader isr = new InputStreamReader(socket.getInputStream());
+        		BufferedReader br = new BufferedReader(isr);
+        		String message = br.readLine();
+        		System.out.println("クライアントからのメッセージ＝" + message);
+        		
+        		/* messageを以下のようなMapにしたかったんだが、
+        		 * get, deleteメソッドにはvalueがないため、難しい
+        		 * {method : get, key: key1}
+        		 * {method : put, key: key1, value : value1}
+        		 * 
+        		 * 現状は配列として、インデックスの
+        		 * 	0がmethod
+        		 * 	1がkey
+        		 * 	2がvalue(methodがputの時のみ)
+        		 */
+        		String[] messageList = message.split(" ");
+        		
+        		SimpleKVS.execOperation(messageList);
+        		
+    			PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+    			writer.println("good!!!"); 
+    		}
     	} catch (IOException e) {
     		e.printStackTrace();
     	}
-            System.out.println("<<< end");
     }
     
-    private static String readHeader(BufferedReader br) throws IOException{
-    	String line = br.readLine();
-    	StringBuilder header = new StringBuilder();
-    	while(line != null && !line.isEmpty()) {
-    		header.append(line + "\n");
-    		line = br.readLine();
-    	}
-    	return header.toString();
-    }
-    
-    private static void switchMethod(String method) {
-    	switch (method) {
-    		case "GET":
-    			// get処理
+    private static void execOperation(String[] mList) {
+    	String method = mList[0];
+    	switch(method) {
+    		case "get":
+    			System.out.println("getメソッド");
+    			System.out.println("key : " + mList[1]);
     			break;
-    		case "PUT":
-    			// put処理
+    		case "put":
+    			if (mList.length == 3) {
+        			System.out.println("putメソッド");
+        			System.out.println("key : " + mList[1]);
+        			System.out.println("value : " + mList[2]);
+    			} else {
+    				System.out.println("Message invalid");
+    			}
     			break;
-    		case "DELETE":
-    			// delete処理
+    		case "delete":
+    			System.out.println("deleteメソッド");
+    			System.out.println("key : " + mList[1]);
     			break;
     	}
     }
-    
+
     public static void main(String[] args) {
     	SimpleKVS.run();
     }
-
 }
-
