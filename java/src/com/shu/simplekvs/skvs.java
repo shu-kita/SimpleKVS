@@ -13,6 +13,10 @@ public class skvs {
 			 PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
 			 BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))
 		) {
+			/*
+			 * 引数のチェックを書く必要がある。
+			 * 引数の数、メソッドの内容？
+			 */
 			String message = String.join(" ", args);
 			writer.println(message);
 			System.out.println(reader.readLine());

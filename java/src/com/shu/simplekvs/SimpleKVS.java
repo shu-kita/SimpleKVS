@@ -73,7 +73,7 @@ public class SimpleKVS {
     	return this.isDeleted(value) ? null : value;
     }
 
-    public void set(String key, String value) {
+    public void put(String key, String value) {
     	this.writeWAL(key, value);
         this.memtable.put(key, value);
         if (this.memtable.size() >= this.memtableLimit) {
@@ -84,7 +84,6 @@ public class SimpleKVS {
         	} catch (IOException e){
         		e.printStackTrace();
         	}
-        	
         }
     }
 
@@ -92,7 +91,6 @@ public class SimpleKVS {
         this.writeWAL(key, "__tombstone__");
         this.memtable.put(key, "__tombstone__");
     }
-
 
     /*
      以下、privateのメソッド
@@ -103,7 +101,7 @@ public class SimpleKVS {
     
     private void writeWAL(String key, String value) {
     	try {
-    		this.wal.set(key, value);
+    		this.wal.put(key, value);
     	} catch (OverlappingFileLockException e) {
     		// TODO : Lockできなかった時の処理(ログ出力？？）
     		e.printStackTrace();
@@ -142,7 +140,7 @@ public class SimpleKVS {
     	return value;
     }
     
-    private static void run() {
+    private void run() {
     	final int PORT = 10000;
 
     	try (ServerSocket server = new ServerSocket(PORT)) {
@@ -166,40 +164,53 @@ public class SimpleKVS {
         		 */
         		String[] messageList = message.split(" ");
         		
-        		SimpleKVS.execOperation(messageList);
+        		String execRes = this.execOperation(messageList);
         		
     			PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-    			writer.println("good!!!"); 
+    			writer.println(execRes); 
     		}
     	} catch (IOException e) {
     		e.printStackTrace();
     	}
     }
     
-    private static void execOperation(String[] mList) {
+    private String execOperation(String[] mList) {
+    	/* TODO:
+    	 * mListは長さが 2 or 3の配列
+    	 * 1や4以上の時の処理が書けていない
+    	 */
     	String method = mList[0];
+    	String key = mList[1];
+
+    	String value = null;
+    	if (mList.length == 3) {
+    		value = mList[2];
+    	}
+
+    	String result = null;
     	switch(method) {
     		case "get":
-    			System.out.println("getメソッド");
-    			System.out.println("key : " + mList[1]);
+    			result = this.get(key);
     			break;
     		case "put":
-    			if (mList.length == 3) {
-        			System.out.println("putメソッド");
-        			System.out.println("key : " + mList[1]);
-        			System.out.println("value : " + mList[2]);
-    			} else {
-    				System.out.println("Message invalid");
-    			}
+    			this.put(key,value);
+    			result = "success put";
     			break;
     		case "delete":
-    			System.out.println("deleteメソッド");
-    			System.out.println("key : " + mList[1]);
+    			this.delete(key);
+    			result = "success delete";
     			break;
+    		/*
+    		 * ↑のどれにも当てはまらないときの処理を
+    		 * どうするか決めかねているので、書いていない。
+    		 * 例外？null？
+    		 */
     	}
+    	return result;
     }
 
     public static void main(String[] args) {
-    	SimpleKVS.run();
+    	SimpleKVS kvs = new SimpleKVS("test");
+    	kvs.run();
     }
 }
