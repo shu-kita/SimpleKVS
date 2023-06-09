@@ -7,21 +7,38 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 public class skvs {
+	private static final String help = """
+			get, deleteの時
+			    java skvs <get or delete> <key>
+			putの時
+			    java skvs put <key> <value>
+			""";
 	public static void main(String[] args) {
 		// クライアントソケットを生成
 		try (Socket socket = new Socket("localhost", 10000);
 			 PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
 			 BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))
 		) {
-			/*
-			 * 引数のチェックを書く必要がある。
-			 * 引数の数、メソッドの内容？
-			 */
+			if (!skvs.checkArgs(args)) {
+				System.out.println("引数が間違っています");
+				System.out.println("Usage :");
+				System.out.println(help);
+				return;
+			}
 			String message = String.join(" ", args);
 			writer.println(message);
 			System.out.println(reader.readLine());
 		} catch (IOException e){
 			e.printStackTrace();
 		}
+	}
+	
+	private static boolean checkArgs(String args[]) {
+		boolean result = switch (args[0]) {
+		case "get", "delete"-> args.length == 2 ? true : false;
+		case "put"-> args.length == 3 ? true : false;
+		default -> false;
+		};
+		return result;
 	}
 }
