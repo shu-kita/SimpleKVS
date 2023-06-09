@@ -13,18 +13,21 @@ public class skvs {
 			putの時
 			    java skvs put <key> <value>
 			""";
+	
 	public static void main(String[] args) {
+		if (!skvs.checkArgs(args)) {
+			System.out.println(String.format("""
+					[ERROR] 引数が間違っています
+					Usage :					
+					%s
+					""", skvs.help));
+			return;
+		}
 		// クライアントソケットを生成
 		try (Socket socket = new Socket("localhost", 10000);
 			 PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
 			 BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))
 		) {
-			if (!skvs.checkArgs(args)) {
-				System.out.println("引数が間違っています");
-				System.out.println("Usage :");
-				System.out.println(help);
-				return;
-			}
 			String message = String.join(" ", args);
 			writer.println(message);
 			System.out.println(reader.readLine());
@@ -34,6 +37,10 @@ public class skvs {
 	}
 	
 	private static boolean checkArgs(String args[]) {
+		if (args.length == 0) {
+			return false;
+		}
+		
 		boolean result = switch (args[0]) {
 		case "get", "delete"-> args.length == 2 ? true : false;
 		case "put"-> args.length == 3 ? true : false;
